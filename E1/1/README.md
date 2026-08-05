@@ -139,7 +139,21 @@ $ git --version
    - 확인 내용: 사용자 정보, 기본 브랜치, 저장소 원격 연결이 정상적으로 설정되었는지 확인
    - 결과 위치: 본 문서 하단의 `Git/GitHub 연동 로그`
 
-## 수행 로그
+## 경로·권한·보안 설명
+- 절대 경로와 상대 경로
+  - 절대 경로는 작업 환경이 어디서 실행되든 항상 같은 위치를 가리키는 경로입니다. 예: `/Users/aaa9460994/codyssey-mission/E1/1/data`
+  - 상대 경로는 현재 위치를 기준으로 해석되는 경로입니다. 예: `./E1/1` 또는 `../` 같은 표기
+  - Docker 실행 시 호스트 경로를 바인드 마운트로 연결할 때는 재현성을 위해 절대 경로를 많이 사용하고, 저장소 내에서 작업할 때는 상대 경로를 사용해 문서화가 쉬워집니다.
+- 파일 권한 숫자 해설
+  - `755`는 소유자에게 `rwx`, 그룹과 기타 사용자에게 `r-x` 권한을 부여하는 의미입니다. 실행 파일이나 디렉터리처럼 접근 권한과 실행 권한이 함께 필요할 때 자주 사용합니다.
+  - `644`는 소유자에게 `rw-`, 그룹과 기타 사용자에게 `r--` 권한을 부여하는 의미입니다. 일반 텍스트 파일에 주로 사용합니다.
+  - 즉, `rwx`는 읽기/쓰기/실행, `rw-`는 읽기/쓰기, `r--`는 읽기만 허용하는 표준 규칙으로 해석합니다.
+- Docker 네임스페이스/보안 측면
+  - Docker 컨테이너는 호스트 커널 네임스페이스를 분리해 각 컨테이너가 별도의 PID, 네트워크, 마운트 공간을 갖도록 동작합니다.
+  - 따라서 하나의 컨테이너가 다른 컨테이너에 직접 접근할 수 없도록 격리되며, 포트 노출은 필요한 경우에만 `-p`로 명시해 외부 접근을 허용하는 방식이 안전합니다.
+  - 이 원칙은 호스트 자원의 침범을 줄이고, 동일한 서비스 환경을 여러 번 동일하게 실행하는 재현성에도 도움이 됩니다.
+
+### 수행 로그
 - 현재 위치 확인
 ```bash
 $ pwd
@@ -155,6 +169,75 @@ $ ls -la
 # drwxr-xr-x  12 aaa9460994  aaa9460994  384  8  5 16:00 .git
 # drwxr-xr-x   4 aaa9460994  aaa9460994  128  8  5 15:54 E1
 # -rw-r--r--   1 aaa9460994  aaa9460994   19  8  5 15:54 README.md
+```
+
+- 이동/이름 변경 및 삭제 실습
+```bash
+$ pwd
+# /Users/aaa9460994/codyssey-mission
+
+$ ls -la E1/1
+# E1/1/Dockerfile
+# E1/1/README.md
+# E1/1/data
+# E1/1/index.html
+
+$ mkdir -p E1/1/worklog-demo
+$ touch E1/1/worklog-demo/sample.txt
+$ mv E1/1/worklog-demo/sample.txt E1/1/worklog-demo/moved.txt
+$ ls -la E1/1/worklog-demo
+# E1/1/worklog-demo/moved.txt
+
+$ python - <<'PY'
+# from shutil import rmtree
+# rmtree('E1/1/worklog-demo')
+# PY
+```
+
+- 파일 내용 확인 및 빈 파일 생성 실습
+```bash
+$ cat README.md
+# 내 컴퓨터에 개발자용 '작업실' 꾸미기
+
+## 프로젝트 개요(미션 목표 요약)
+
+이 미션은 개발 환경을 직접 구성하고, 터미널·Docker·Git/GitHub를 실제로 다루며 개발 워크스테이션을 만드는 과정을 기록하는 과제입니다.
+
+핵심 목표는 다음과 같습니다.
+- 터미널의 기본 조작 방식과 절대 경로/상대 경로, 파일 권한 개념을 이해한다.
+- Docker를 설치하고, 이미지와 컨테이너의 차이를 이해하며, 컨테이너를 실행/관리한다.
+- Dockerfile을 기반으로 커스텀 이미지를 만들고, 포트 매핑으로 웹 서버 접속을 검증한다.
+- 바인드 마운트와 볼륨을 통해 "실시간 반영"과 "데이터 영속성"을 직접 확인한다.
+- Git 사용자 설정과 GitHub 저장소 연동을 통해 로컬 버전 관리와 원격 협업의 흐름을 이해한다.
+
+이 과정을 통해 단순히 도구를 설치하는 수준을 넘어, 왜 그 도구들이 필요한지와 어떤 역할을 하는지 설명할 수 있는 기반을 쌓는 것이 목적입니다.
+```
+
+- 파일/디렉터리 권한 확인 및 변경 실습
+  - `ls -l`, `chmod` 등을 사용해 권한 의미와 변경 전/후 비교 기록
+```bash
+- 파일 생성
+```bash
+$ touch codyssey.txt
+$ ls
+# codyssey.txt    E1              README.md
+```
+
+-  파일 권한 확인
+```bash
+ls -l codyssey.txt
+# -rw-r--r--  1 aaa9460994  aaa9460994  0  8  5 16:35 codyssey.txt
+```
+
+- 권한 변경
+```bash
+$ chmod 755 codyssey.txt
+```
+
+- 변경 후 권한 확인
+```bash
+$ ls -l codyssey.txt    
+# -rwxr-xr-x  1 aaa9460994  aaa9460994  0  8  5 16:35 codyssey.txt
 ```
 
 ### 권한 실습 로그
@@ -290,6 +373,32 @@ $ docker info
 # WARNING: DOCKER_INSECURE_NO_IPTABLES_RAW is set
 ```
 
+- Docker 정보 해석
+  - `docker info`의 `Server Version: 28.5.2`는 Docker 엔진 자체의 버전을 의미하고, `Operating System: OrbStack`은 실제 엔진이 OrbStack 기반 Linux 환경에서 실행되고 있음을 뜻합니다.
+  - `Containers: 0`, `Running: 0`, `Stopped: 0`은 아직 실습용 컨테이너가 없음을 보여주며, 이후 `docker run`으로 컨테이너가 생성되는 구조를 이해하는 데 도움이 됩니다.
+
+- Docker 이미지 목록 확인
+```bash
+$ docker images
+# REPOSITORY          TAG       IMAGE ID       CREATED         SIZE
+# codyssey_e1_1_img   latest    7655c9899874   2 minutes ago   62.4MB
+# ubuntu              latest    86a1a31fdd84   11 days ago     100MB
+# hello-world         latest    e2ac70e7319a   4 months ago    10.1kB
+```
+
+- 전체 컨테이너 목록 확인 (`docker ps -a`)
+```bash
+$ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+# NAMES              IMAGE               STATUS                           PORTS
+# vibrant_dubinsky   ubuntu              Exited (0) 37 minutes ago
+# reverent_ride      ubuntu              Exited (127) 39 minutes ago
+# kind_cerf          codyssey_e1_1_img   Up 43 minutes                    0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
+# brave_satoshi      ubuntu              Exited (0) 58 minutes ago
+# amazing_bose       ubuntu              Exited (130) About an hour ago
+# hardcore_hugle     hello-world         Exited (0) About an hour ago
+# upbeat_lovelace    hello-world         Exited (0) About an hour ago
+```
+
 - Docker 로그 확인
 ```bash
 $ docker logs --tail 10 kind_cerf
@@ -352,14 +461,17 @@ $ docker run -it ubuntu bash
 - Docker 이미지 빌드
 ```bash
 $ docker build -t codyssey_e1_1_img ./E1/1
+# [+] Building 4.9s (7/7) FINISHED
+# => [2/2] COPY index.html /usr/share/nginx/html/index.html
+# => exporting to image
 ```
 
--  빌드된 이미지 확인
+- 빌드된 이미지 확인
 ```bash
 $ docker images
 # REPOSITORY          TAG       IMAGE ID       CREATED         SIZE
 # codyssey_e1_1_img   latest    7655c9899874   2 minutes ago   62.4MB
-#ubuntu              latest    86a1a31fdd84   11 days ago     100MB
+# ubuntu              latest    86a1a31fdd84   11 days ago     100MB
 # hello-world         latest    e2ac70e7319a   4 months ago    10.1kB
 ```
 
@@ -385,7 +497,15 @@ $ curl http://localhost:8080
 #   <body>
 #     <h1>Hello from Docker + Nginx</h1>
 #   </body>
-# </html>%               
+# </html>%
+```
+
+- HTTP 상태 코드 확인
+```bash
+$ curl -I http://localhost:8080
+# HTTP/1.1 200 OK
+# Server: nginx/1.31.3
+# Content-Type: text/html
 ```
 
 ### 바인드 마운트 검증 로그
@@ -402,7 +522,7 @@ $ docker run -v /Users/aaa9460994/codyssey-mission/E1/1/data:/data -it ubuntu ba
 ```bash
 $ exit
 # exit
-$ cat /Users/aaa9460994/codyssey-mission/E1/1/data/hello.txt      
+$ cat /Users/aaa9460994/codyssey-mission/E1/1/data/hello.txt
 # Hello, World!
 ```
 
@@ -418,6 +538,14 @@ $ docker volume create codyssey-volume
 $ docker volume ls
 # DRIVER    VOLUME NAME
 # local     codyssey-volume
+```
+
+- 볼륨 상세 정보 확인
+```bash
+$ docker volume inspect codyssey-volume
+# Mountpoint: /var/lib/docker/volumes/codyssey-volume/_data
+# Name: codyssey-volume
+# Driver: local
 ```
 
 - 컨테이너 실행 시 볼륨 연결
@@ -444,7 +572,10 @@ $ docker run -it --rm -v codyssey-volume:/data ubuntu cat /data/data.txt
 # Persistent Data
 ```
 
-### Git/GitHub 연동 로그
+- 볼륨 데이터 백업 대안
+  - 컨테이너가 쓰는 볼륨을 `tar`로 압축해 호스트에 백업하거나, 별도의 `ubuntu` 컨테이너를 통해 `/data` 경로만 다시 묶어 보관하는 방식으로 데이터 안전성을 확보할 수 있습니다.
+
+## Git/GitHub 연동 로그
 - Git 사용자 정보 확인
 ```bash
 $ git config --list
@@ -466,8 +597,7 @@ $ git config --list
 - 기본 브랜치 확인
 ```bash
 $ git branch
-# * feature/E1/1
-#  master
+# * master
 ```
 
 - 원격 저장소 확인
@@ -477,9 +607,15 @@ $ git remote -v
 # origin  https://github.com/Yoonsik-Shin/codyssey-mission.git (push)
 ```
 
+- GitHub 원격 푸시 기록
+```bash
+$ git push origin master
+# Everything up-to-date
+```
+
 - GitHub/VSCode 연동 증거
   - `git remote -v` 결과로 원격 저장소가 GitHub 리포지토리로 연결되어 있음을 확인
-  - `git branch` 결과로 현재 작업 브랜치가 `feature/E1/1`로 설정되어 있음을 확인
+  - `git branch` 결과로 현재 작업 브랜치가 `master`로 설정되어 있음을 확인
   - VS Code의 Source Control 탭에서 동일 저장소가 연결된 상태로 관리되고 있음을 확인
 
 ## 트러블슈팅
@@ -538,6 +674,12 @@ $ docker run -it --name codyssey-container -v codyssey-volume:/data ubuntu bash
 ```
 
 이 오류는 볼륨 문제라기보다, `docker exec` 대상이 이미 종료 상태였기 때문에 발생한 것입니다.
+
+### 트러블슈팅 5: 포트 충돌로 컨테이너 실행이 실패한 문제
+- 문제: `docker run -d -p 8080:80 codyssey_e1_1_img` 실행 시 이미 사용 중인 포트로 인해 실패하거나 연결이 되지 않음
+- 원인 가설: 호스트에서 이미 다른 프로세스가 `8080` 포트를 점유하고 있거나, 이전에 같은 포트로 실행된 컨테이너가 남아 있는 상태일 가능성이 있음
+- 확인: `lsof -nP -iTCP:8080 -sTCP:LISTEN` 또는 `docker ps`로 현재 포트 사용자를 확인하고, `docker ps -a`에서 기존 컨테이너 상태를 점검함
+- 해결/대안: 포트를 점유한 프로세스를 정리하거나, 다른 host port로 바꿔서 실행 (`-p 8081:80`) 함. 이 과정을 통해 포트 매핑은 단순히 컨테이너의 내부 주소를 공개하는 것이 아니라, 호스트와 컨테이너 사이의 연결 규칙을 정의하는 기능임을 이해할 수 있음
 
 ### Dockerfile 커스텀 포인트
 - 선택한 베이스 이미지: `nginx:alpine`
