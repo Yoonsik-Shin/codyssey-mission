@@ -176,22 +176,34 @@ $ ls -la
 $ pwd
 # /Users/aaa9460994/codyssey-mission
 
-$ ls -la E1/1
-# E1/1/Dockerfile
-# E1/1/README.md
-# E1/1/data
-# E1/1/index.html
-
 $ mkdir -p E1/1/worklog-demo
 $ touch E1/1/worklog-demo/sample.txt
-$ mv E1/1/worklog-demo/sample.txt E1/1/worklog-demo/moved.txt
-$ ls -la E1/1/worklog-demo
-# E1/1/worklog-demo/moved.txt
 
-$ python - <<'PY'
-# from shutil import rmtree
-# rmtree('E1/1/worklog-demo')
-# PY
+$ ls -la E1/1/worklog-demo
+# total 0
+# drwxr-xr-x  3 aaa9460994  aaa9460994   96  8  5 18:14 .
+# drwxr-xr-x  7 aaa9460994  aaa9460994  224  8  5 18:14 ..
+# -rw-r--r--  1 aaa9460994  aaa9460994    0  8  5 18:14 sample.txt
+
+$ mv E1/1/worklog-demo/sample.txt E1/1/worklog-demo/moved.txt
+
+$ ls -la E1/1/worklog-demo
+# total 0
+# drwxr-xr-x  3 aaa9460994  aaa9460994   96  8  5 18:14 .
+# drwxr-xr-x  7 aaa9460994  aaa9460994  224  8  5 18:14 ..
+# -rw-r--r--  1 aaa9460994  aaa9460994    0  8  5 18:14 moved.txt
+
+$ rm -rf E1/1/worklog-demo
+
+$ ls -la E1/1
+# total 80
+# drwxr-xr-x  6 aaa9460994  aaa9460994    192  8  5 18:14 .
+# drwxr-xr-x  4 aaa9460994  aaa9460994    128  8  5 15:54 ..
+# drwxr-xr-x  3 aaa9460994  aaa9460994     96  8  5 17:59 data
+# -rw-r--r--  1 aaa9460994  aaa9460994    111  8  5 17:59 Dockerfile
+# -rw-r--r--  1 aaa9460994  aaa9460994     88  8  5 17:59 index.html
+# -rw-r--r--  1 aaa9460994  aaa9460994  29379  8  5 18:06 README.md
+# (worklog-demo 디렉터리가 목록에서 사라진 것으로 삭제 확인)
 ```
 
 - 파일 내용 확인 및 빈 파일 생성 실습
@@ -397,6 +409,33 @@ $ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
 # amazing_bose       ubuntu              Exited (130) About an hour ago
 # hardcore_hugle     hello-world         Exited (0) About an hour ago
 # upbeat_lovelace    hello-world         Exited (0) About an hour ago
+```
+
+- 컨테이너 삭제 전/후 `docker ps -a` 비교 (삭제 이력 확인)
+```bash
+# 1) 삭제 전: 데모용 컨테이너 실행
+$ docker run -d --name codyssey-demo-cleanup ubuntu sleep infinity
+# d41505572c21f5c09e1e00f0dc42de4342b6db4796eff3ff2ef904e460f67e48
+
+$ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
+# NAMES                   IMAGE               STATUS
+# codyssey-demo-cleanup   ubuntu              Up Less than a second
+# vibrant_dubinsky        ubuntu              Exited (0) 49 minutes ago
+# reverent_ride           ubuntu              Exited (127) 51 minutes ago
+# kind_cerf               codyssey_e1_1_img   Up 55 minutes
+# ...
+
+# 2) 삭제
+$ docker rm -f codyssey-demo-cleanup
+# codyssey-demo-cleanup
+
+# 3) 삭제 후: 목록에서 codyssey-demo-cleanup이 사라진 것을 확인
+$ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
+# NAMES              IMAGE               STATUS
+# vibrant_dubinsky   ubuntu              Exited (0) 49 minutes ago
+# reverent_ride      ubuntu              Exited (127) 51 minutes ago
+# kind_cerf          codyssey_e1_1_img   Up 55 minutes
+# ...
 ```
 
 - Docker 로그 확인
