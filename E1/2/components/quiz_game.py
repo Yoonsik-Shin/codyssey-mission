@@ -67,8 +67,8 @@ class QuizGame:
 
     # 기존에 저장된 퀴즈가 있다면 불러옴
     # 없거나 손상되었으면 새로 시작 및 복구
-    @staticmethod
-    def init_quiz():
+    @classmethod
+    def init_quiz(cls):
         quizzes = []
         try:
             with open(QuizGame.file_path, 'r', encoding='utf-8') as f:
@@ -91,15 +91,15 @@ class QuizGame:
 
             best_state = data.get('bestState', {"score": 0, "correct": 0, "total": len(quizzes)})
             game_histories = data.get('gameHistories', [])
-            return QuizGame(quizzes, best_state, game_histories, True)
+            return cls(quizzes, best_state, game_histories, True)
 
         except FileNotFoundError:
             print("데이터 파일이 없습니다. 기본 퀴즈 데이터로 시작합니다.")
-            return QuizGame._save_default_state()
+            return cls._save_default_state()
 
         except (TypeError, ValueError, json.JSONDecodeError, KeyError) as error:
             print(f"⚠️ 데이터 형식이 잘못되었거나 파일이 손상되었습니다. 기본 데이터로 복구합니다. {error}")
-            return QuizGame._save_default_state()
+            return cls._save_default_state()
 
     def choice_menu(self):
         info = f"📂 저장된 데이터를 불러왔습니다. (퀴즈 {len(self.quizzes)}개, 최고점수 {self.best_state['score']}점)" if self.is_loaded else None
@@ -210,8 +210,8 @@ class QuizGame:
     def close(self):
         self.save_current_state()
 
-    @staticmethod
-    def _save_default_state():
+    @classmethod
+    def _save_default_state(cls):
         """기본 퀴즈 데이터를 state.json 파일에 복구/초기화하여 저장합니다."""
         default_data = {
             "quizzes": [
@@ -236,7 +236,7 @@ class QuizGame:
         except (OSError, TypeError) as e:
             print(f"⚠️ 기본 데이터 파일 저장 실패: {e}")
         
-        return QuizGame(QuizGame._fallback_quizzes, {"score": 0, "correct": 0, "total": len(QuizGame._fallback_quizzes)}, [], False)
+        return cls(QuizGame._fallback_quizzes, {"score": 0, "correct": 0, "total": len(QuizGame._fallback_quizzes)}, [], False)
 
     def save_current_state(self):
         save_data = {
