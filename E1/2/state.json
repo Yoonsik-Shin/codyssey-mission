@@ -65,5 +65,6 @@
         "score": 100,
         "correct": 6,
         "total": 6
-    }
+    },
+    "gameHistories": []
 }
