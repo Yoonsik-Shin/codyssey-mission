@@ -8,3 +8,8 @@ __pycache__/
 .venv/
 venv/
 ENV/
+
+# Temporary, backup & log files
+*.tmp
+*.bak
+logs/
