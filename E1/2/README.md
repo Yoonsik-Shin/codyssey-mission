@@ -138,3 +138,15 @@ E1/2/
   * `total_quiz_count` (`int`): 푼 문제 수
   * `correct_quiz_count` (`int`): 맞힌 문제 수
   * `score` (`int`): 백분율 기준 획득 점수 (0~100)
+
+---
+
+## 📷 7. 실행 화면 스크린샷
+
+| 메뉴 화면 (`menu.png`) | 퀴즈 풀기 (`play.png`) |
+|:---:|:---:|
+| ![메뉴 화면](docs/screenshots/menu.png) | ![퀴즈 풀기](docs/screenshots/play.png) |
+
+| 퀴즈 추가 (`add_quiz.png`) | 점수 및 히스토리 (`score.png`) |
+|:---:|:---:|
+| ![퀴즈 추가](docs/screenshots/add_quiz.png) | ![점수 및 히스토리](docs/screenshots/score.png) |
