@@ -1,4 +1,5 @@
 {
+    "schemaVersion": "1.0.0",
     "quizzes": [
         {
             "question": "LIFO(Last-In, First-Out) 특징을 가지는 자료구조는 무엇인가?",
@@ -10,9 +11,11 @@
             ],
             "answer": 1,
             "hint_data": {
-                "sentence": "입력된 순서의 반대로 출력되는 후입선출(Last-In, First-Out) 자료구조입니다.",
+                "sentence": "입력된 순서의 반대로 출력되는 후입선출 자료구조입니다.",
                 "cost": 100
-            }
+            },
+            "category": "Data Structure",
+            "difficulty": "Easy"
         },
         {
             "question": "OSI 7계층 중 IP 주소를 기반으로 패킷의 경로를 결정하는 3계층(네트워크 계층)의 주요 장비는?",
@@ -24,9 +27,11 @@
             ],
             "answer": 1,
             "hint_data": {
-                "sentence": "데이터 패킷의 최적 경로를 지정해주는 대표적인 3계층 네트워크 장비입니다.",
+                "sentence": "데이터 전송 최적의 경로를 지정해주는 장비입니다.",
                 "cost": 100
-            }
+            },
+            "category": "Network",
+            "difficulty": "Medium"
         },
         {
             "question": "데이터베이스 트랜잭션의 안전성을 보장하기 위한 ACID 특성에 포함되지 않는 것은?",
@@ -38,9 +43,11 @@
             ],
             "answer": 2,
             "hint_data": {
-                "sentence": "보안성(Security)은 독립적인 대분류 정보보호 영역에 속합니다.",
+                "sentence": "보안성(Security)은 독립적인 대분류 보안 영역에 속합니다.",
                 "cost": 100
-            }
+            },
+            "category": "Database",
+            "difficulty": "Medium"
         },
         {
             "question": "두 개 이상의 프로세스가 서로 자원을 점유한 상태에서 상대방의 자원을 요구하며 무한히 대기하는 현상은?",
@@ -52,9 +59,11 @@
             ],
             "answer": 0,
             "hint_data": {
-                "sentence": "영문으로 Deadlock이라 불리는 교착 상태 현상입니다.",
+                "sentence": "영문으로 Deadlock이라 불리는 교착 현상입니다.",
                 "cost": 100
-            }
+            },
+            "category": "OS",
+            "difficulty": "Medium"
         },
         {
             "question": "최악의 경우(Worst-case)에도 O(n log n)의 시간 복잡도를 보장하는 정렬 알고리즘은?",
@@ -66,23 +75,27 @@
             ],
             "answer": 3,
             "hint_data": {
-                "sentence": "분할 정복(Divide and Conquer) 기법을 사용하는 안정 정렬 알고리즘입니다.",
+                "sentence": "분할 정복(Divide and Conquer) 방식을 사용하는 정렬입니다.",
                 "cost": 100
-            }
+            },
+            "category": "Algorithm",
+            "difficulty": "Hard"
         },
         {
-            "question": "연결 지향적이며 신뢰성 있는 데이터 전송을 보장하는 전송 계층(Transport Layer) 프로토콜은 무엇인가?",
+            "question": "Python의 가비지 컬렉터(Garbage Collector)가 주된 메모리 해제 메커니즘으로 사용하는 방식은?",
             "choices": [
-                "UDP (User Datagram Protocol)",
-                "IP (Internet Protocol)",
-                "TCP (Transmission Control Protocol)",
-                "ICMP (Internet Control Message Protocol)"
+                "레퍼런스 카운팅 (Reference Counting)",
+                "Mark-and-Sweep",
+                "Stop-The-World",
+                "Generational GC"
             ],
-            "answer": 2,
+            "answer": 0,
             "hint_data": {
-                "sentence": "3-way handshake를 거쳐 신뢰성 있는 데이터 연결 전송을 보장합니다.",
+                "sentence": "객체를 참조하는 수(Count)를 추적하여 0이 되면 해제합니다.",
                 "cost": 100
-            }
+            },
+            "category": "Language",
+            "difficulty": "Medium"
         }
     ],
     "bestState": {
@@ -92,10 +105,10 @@
     },
     "gameHistories": [
         {
-            "timestamp": "2026-08-07 11:56:08",
-            "total_quiz_count": 6,
-            "correct_quiz_count": 1,
-            "score": 16
+            "timestamp": "2026-08-07 08:39:34",
+            "total_quiz_count": 5,
+            "correct_quiz_count": 4,
+            "score": 80
         }
     ]
 }

@@ -1,5 +1,6 @@
 import random
 from components.quiz_game import QuizGame
+from components.score_calculator import ScoreCalculator
 from utils.input_utils import InputUtils
 from utils.output_utils import OutputUtils
 
@@ -68,7 +69,8 @@ class BonusQuizGame(QuizGame):
                 correct_answer_count += 1
             OutputUtils.print_lines(result_str)
 
-        total_score = correct_answer_count * 100 // question_count
+        # ScoreCalculator 책임 분리 적용
+        total_score = ScoreCalculator.calculate_score(correct_answer_count, question_count)
 
         lines = [
             "----------------------------------------",
@@ -78,13 +80,9 @@ class BonusQuizGame(QuizGame):
             "----------------------------------------"
         ]
 
-        if total_score > self.best_state["score"]:
+        if ScoreCalculator.is_new_record(total_score, self.best_state["score"]):
             lines.append("✨ 신기록 달성!")
-            self.best_state = {
-                "score": total_score,
-                "correct": correct_answer_count,
-                "total": question_count
-            }
+            self.best_state = ScoreCalculator.create_best_state(total_score, correct_answer_count, question_count)
 
         OutputUtils.print_lines(*lines)
         self.record_game_history(question_count, correct_answer_count, total_score)

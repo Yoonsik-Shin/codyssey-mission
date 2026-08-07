@@ -2,13 +2,13 @@ class InputUtils:
     @staticmethod
     def get_valid_int(prompt: str, min_val: int, max_val: int, custom_error_msg: str = None) -> int:
         """범위 내의 정수 입력을 안전하게 받아 반환합니다."""
-        default_error_msg = f"⚠️ 잘못된 입력입니다. {min_val}-{max_val} 사이의 숫자를 입력하세요."
+        default_error_msg = f"⚠️ 잘못된 입력입니다. [{min_val}~{max_val}] 범위의 숫자를 입력하세요."
         error_msg = custom_error_msg if custom_error_msg else default_error_msg
 
         while True:
             raw_input = input(prompt).strip()
             if not raw_input:
-                print("⚠️ 빈 입력입니다. 숫자를 입력하세요.")
+                print("⚠️ 빈 입력입니다. 숫자를 입력해 주세요.")
                 continue
 
             try:
@@ -30,3 +30,15 @@ class InputUtils:
                 print(error_msg)
                 continue
             return text
+
+    @staticmethod
+    def get_confirm_yes_no(prompt: str = "정말 진행하시겠습니까? (y/n): ") -> bool:
+        """사용자 확인(y/n)을 받아 bool 값으로 반환합니다."""
+        while True:
+            ans = input(prompt).strip().lower()
+            if ans in ['y', 'yes']:
+                return True
+            elif ans in ['n', 'no']:
+                return False
+            print("⚠️ 잘못된 입력입니다. 'y' 또는 'n'을 입력하세요.")
+
