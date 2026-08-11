@@ -172,7 +172,9 @@ def json_input_mode():
             failed_cases.append((p_key, reason))
             continue
 
-        verdict = Utils.judge(cross_score, "Cross", x_score, "X")
+        cross_label = Utils.normalize_label("cross")
+        x_label = Utils.normalize_label("x")
+        verdict = Utils.judge(cross_score, cross_label, x_score, x_label)
         expected_label = Utils.normalize_label(p_val.get('expected'))
 
         print(f"Cross 점수: {cross_score}")
