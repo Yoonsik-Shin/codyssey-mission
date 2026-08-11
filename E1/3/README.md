@@ -28,6 +28,7 @@ python bonus1_optimize.py    # 보너스1: 2D vs 1D MAC 연산 성능 비교
 - **판정 로직**: `Utils.judge(score_a, label_a, score_b, label_b)`. 두 점수를 직접 비교해서 큰 쪽 라벨을 반환하고, `|score_a - score_b| < 1e-9`(epsilon)면 `UNDECIDED`를 반환한다. 사용자 입력 모드(A/B)와 JSON 모드(Cross/X)가 이 함수 하나를 공유한다.
 - **라벨 정규화**: `Utils.normalize_label(raw)`. `'+'`/`'cross'` → `Cross`, `'x'` → `X` 로 표준화. filter 키와 `expected` 값 양쪽 다 이 함수를 거쳐 표준 라벨(Cross/X)로만 비교/출력한다.
 - **동점 처리 정책**: 위 epsilon 기준(`1e-9`)을 전역으로 통일해서 사용. 점수가 부동소수점 연산 결과라 정확히 같은 값이 아니어도 근접하면 동점으로 간주해야 하기 때문.
+- **모드별 동점 규칙 차이**: 판정 로직(`Utils.judge`, epsilon 1e-9)은 모드1/모드2가 완전히 동일하다. 차이는 UNDECIDED 결과를 어떻게 소비하느냐에 있다. 모드1은 `expected` 값이 없는 순수 비교 모드라 UNDECIDED가 나와도 "판정 불가" 안내만 하고 끝난다(PASS/FAIL 개념 자체가 없음). 모드2는 `expected`(Cross 또는 X)가 정해져 있는 채점 모드라, UNDECIDED는 Cross·X 어느 쪽과도 일치할 수 없는 값이므로 항상 FAIL로 집계된다.
 - **데이터 접근**: `Utils.get_cell`/`Utils.set_cell`로 매트릭스 특정 위치 값을 읽고 쓴다.
 - **스키마 방어**: JSON 모드에서 패턴 키(`size_{N}_{idx}`)로부터 N을 추출해 대응하는 `size_N` 필터를 찾고, 필터/패턴 크기가 일치하는지 검증한다. 필터가 없거나 크기가 안 맞으면 예외를 던지지 않고 해당 케이스만 FAIL 처리하고 다음 케이스로 넘어간다.
 
