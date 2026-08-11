@@ -148,6 +148,13 @@ $ git --version
   - `755`는 소유자에게 `rwx`, 그룹과 기타 사용자에게 `r-x` 권한을 부여하는 의미입니다. 실행 파일이나 디렉터리처럼 접근 권한과 실행 권한이 함께 필요할 때 자주 사용합니다.
   - `644`는 소유자에게 `rw-`, 그룹과 기타 사용자에게 `r--` 권한을 부여하는 의미입니다. 일반 텍스트 파일에 주로 사용합니다.
   - 즉, `rwx`는 읽기/쓰기/실행, `rw-`는 읽기/쓰기, `r--`는 읽기만 허용하는 표준 규칙으로 해석합니다.
+- 소유자·그룹·기타 사용자의 의미
+  - macOS/Linux는 한 컴퓨터 안에 여러 사용자 계정이 존재할 수 있는 다중 사용자 시스템으로 설계되어 있고, 파일 권한은 이 계정 단위로 적용됩니다. 네트워크 접근 여부와는 무관한 개념입니다.
+  - 소유자(owner/user): 파일을 생성한 계정. `ls -l` 결과의 세 번째 컬럼에 표시됩니다.
+  - 그룹(group): 여러 계정을 묶은 단위로, `ls -l` 결과의 네 번째 컬럼에 표시됩니다. 같은 그룹에 속한 계정들에게 동일한 권한을 부여할 때 사용합니다. 파일의 그룹은 생성 시 소유자의 기본 그룹으로 지정되며, `chgrp`나 `chown user:group`으로 변경할 수 있습니다.
+  - 기타(others): 소유자도 아니고 해당 그룹의 멤버도 아닌 나머지 모든 계정입니다.
+  - 활용 예: 서버에서 웹서버 프로세스와 배포 계정을 같은 그룹으로 묶어 그룹에 `rw-`를 주고, 기타 권한은 `r--` 또는 `---`로 최소화해 외부 계정의 접근을 차단하는 식으로 사용합니다. `usermod -aG docker $USER`로 계정을 `docker` 그룹에 추가해 `sudo` 없이 Docker 명령을 실행하는 것도 같은 원리입니다.
+  - 지금처럼 혼자 쓰는 개인 macOS 환경에서는 사실상 소유자 권한만 체감되고 그룹/기타 권한 차이는 크게 드러나지 않지만, 여러 계정이 접근하는 서버 환경에서는 의미가 뚜렷해집니다.
 - Docker 네임스페이스/보안 측면
   - Docker 컨테이너는 호스트 커널 네임스페이스를 분리해 각 컨테이너가 별도의 PID, 네트워크, 마운트 공간을 갖도록 동작합니다.
   - 따라서 하나의 컨테이너가 다른 컨테이너에 직접 접근할 수 없도록 격리되며, 포트 노출은 필요한 경우에만 `-p`로 명시해 외부 접근을 허용하는 방식이 안전합니다.
@@ -162,6 +169,7 @@ $ pwd
 
 - 숨김 파일 포함 목록 확인
 ```bash
+# -l: 상세 정보(권한, 소유자, 크기, 수정일) 표시 / -a: 숨김 파일(.으로 시작) 포함
 $ ls -la
 # total 8
 # drwxr-xr-x   5 aaa9460994  aaa9460994  160  8  5 15:54 .
@@ -176,6 +184,7 @@ $ ls -la
 $ pwd
 # /Users/aaa9460994/codyssey-mission
 
+# -p: 중간 경로 디렉터리가 없으면 함께 생성, 이미 있어도 에러 없이 통과
 $ mkdir -p E1/1/worklog-demo
 $ touch E1/1/worklog-demo/sample.txt
 
@@ -193,6 +202,7 @@ $ ls -la E1/1/worklog-demo
 # drwxr-xr-x  7 aaa9460994  aaa9460994  224  8  5 18:14 ..
 # -rw-r--r--  1 aaa9460994  aaa9460994    0  8  5 18:14 moved.txt
 
+# -r: 디렉터리 내부까지 재귀적으로 삭제 / -f: 확인 프롬프트 없이 강제 삭제
 $ rm -rf E1/1/worklog-demo
 
 $ ls -la E1/1
@@ -208,48 +218,10 @@ $ ls -la E1/1
 
 - 파일 내용 확인 및 빈 파일 생성 실습
 ```bash
-$ cat README.md
+$ cat README.md | head -3
 # 내 컴퓨터에 개발자용 '작업실' 꾸미기
-
-## 프로젝트 개요(미션 목표 요약)
-
-이 미션은 개발 환경을 직접 구성하고, 터미널·Docker·Git/GitHub를 실제로 다루며 개발 워크스테이션을 만드는 과정을 기록하는 과제입니다.
-
-핵심 목표는 다음과 같습니다.
-- 터미널의 기본 조작 방식과 절대 경로/상대 경로, 파일 권한 개념을 이해한다.
-- Docker를 설치하고, 이미지와 컨테이너의 차이를 이해하며, 컨테이너를 실행/관리한다.
-- Dockerfile을 기반으로 커스텀 이미지를 만들고, 포트 매핑으로 웹 서버 접속을 검증한다.
-- 바인드 마운트와 볼륨을 통해 "실시간 반영"과 "데이터 영속성"을 직접 확인한다.
-- Git 사용자 설정과 GitHub 저장소 연동을 통해 로컬 버전 관리와 원격 협업의 흐름을 이해한다.
-
-이 과정을 통해 단순히 도구를 설치하는 수준을 넘어, 왜 그 도구들이 필요한지와 어떤 역할을 하는지 설명할 수 있는 기반을 쌓는 것이 목적입니다.
-```
-
-- 파일/디렉터리 권한 확인 및 변경 실습
-  - `ls -l`, `chmod` 등을 사용해 권한 의미와 변경 전/후 비교 기록
-```bash
-- 파일 생성
-```bash
-$ touch codyssey.txt
-$ ls
-# codyssey.txt    E1              README.md
-```
-
--  파일 권한 확인
-```bash
-ls -l codyssey.txt
-# -rw-r--r--  1 aaa9460994  aaa9460994  0  8  5 16:35 codyssey.txt
-```
-
-- 권한 변경
-```bash
-$ chmod 755 codyssey.txt
-```
-
-- 변경 후 권한 확인
-```bash
-$ ls -l codyssey.txt    
-# -rwxr-xr-x  1 aaa9460994  aaa9460994  0  8  5 16:35 codyssey.txt
+#
+# ## 프로젝트 개요(미션 목표 요약)
 ```
 
 ### 권한 실습 로그
@@ -262,12 +234,14 @@ $ ls
 
 -  파일 권한 확인
 ```bash
+# -l: 파일 권한/소유자/크기 등 상세 정보를 한 줄씩 표시
 ls -l codyssey.txt
 # -rw-r--r--  1 aaa9460994  aaa9460994  0  8  5 16:35 codyssey.txt
 ```
 
 - 권한 변경
 ```bash
+# 755: 소유자 rwx(7), 그룹 r-x(5), 기타 r-x(5) 부여
 $ chmod 755 codyssey.txt
 ```
 
@@ -400,6 +374,8 @@ $ docker images
 
 - 전체 컨테이너 목록 확인 (`docker ps -a`)
 ```bash
+# -a: 실행 중(Up)인 것뿐 아니라 종료(Exited)된 컨테이너까지 전부 표시
+# --format: Go 템플릿으로 출력 컬럼을 원하는 형태로 지정
 $ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
 # NAMES              IMAGE               STATUS                           PORTS
 # vibrant_dubinsky   ubuntu              Exited (0) 37 minutes ago
@@ -414,6 +390,7 @@ $ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
 - 컨테이너 삭제 전/후 `docker ps -a` 비교 (삭제 이력 확인)
 ```bash
 # 1) 삭제 전: 데모용 컨테이너 실행
+# -d: 백그라운드(detached)로 실행 / --name: 컨테이너 이름 지정
 $ docker run -d --name codyssey-demo-cleanup ubuntu sleep infinity
 # d41505572c21f5c09e1e00f0dc42de4342b6db4796eff3ff2ef904e460f67e48
 
@@ -426,6 +403,7 @@ $ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
 # ...
 
 # 2) 삭제
+# -f: 컨테이너가 실행 중이어도 강제로 중지 후 삭제
 $ docker rm -f codyssey-demo-cleanup
 # codyssey-demo-cleanup
 
@@ -440,6 +418,7 @@ $ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
 
 - Docker 로그 확인
 ```bash
+# --tail 10: 전체 로그 대신 마지막 10줄만 출력
 $ docker logs --tail 10 kind_cerf
 # 192.168.215.1 - - [05/Aug/2026:08:21:08 +0000] "GET / HTTP/1.1" 200 88 "-" "curl/8.7.1" "-"
 # 192.168.215.1 - - [05/Aug/2026:08:35:40 +0000] "GET / HTTP/1.1" 200 88 "-" "curl/8.7.1" "-"
@@ -447,6 +426,7 @@ $ docker logs --tail 10 kind_cerf
 
 - Docker 리소스 상태 확인
 ```bash
+# --no-stream: 실시간 갱신 없이 현재 시점 값만 한 번 출력 / --format: 출력 컬럼 지정
 $ docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}'
 # NAME        CPU %     MEM USAGE / LIMIT     NET I/O
 # kind_cerf   0.00%     4.934MiB / 15.67GiB   3.02kB / 1.62kB
@@ -486,6 +466,7 @@ $ docker run hello-world
 
 - ubuntu 컨테이너 실행 후 내부 명령어 실행
 ```bash
+# -i: 표준 입력을 열어둠(interactive) / -t: 터미널(tty) 할당, 둘을 합쳐 대화형 쉘 접속
 $ docker run -it ubuntu bash
 
 'root@4dcbb70572c4:/#' $ ls
@@ -499,6 +480,7 @@ $ docker run -it ubuntu bash
 ### Dockerfile 빌드/실행 로그
 - Docker 이미지 빌드
 ```bash
+# -t: 빌드 결과 이미지에 이름(태그)을 지정 / 마지막 인자는 빌드 컨텍스트(Dockerfile 위치) 경로
 $ docker build -t codyssey_e1_1_img ./E1/1
 # [+] Building 4.9s (7/7) FINISHED
 # => [2/2] COPY index.html /usr/share/nginx/html/index.html
@@ -516,6 +498,7 @@ $ docker images
 
 - 컨테이너 실행
 ```bash
+# -d: 백그라운드 실행 / -p host:container: 호스트 8080 포트를 컨테이너 80 포트로 매핑
 $ docker run -d -p 8080:80 codyssey_e1_1_img
 # 6c88309f8ca2126082ecf6778052b95373ab02283bc589d60ce0abcd6bc2d305
 ```
@@ -541,6 +524,7 @@ $ curl http://localhost:8080
 
 - HTTP 상태 코드 확인
 ```bash
+# -I: 본문 없이 응답 헤더(HTTP 상태 코드 포함)만 조회
 $ curl -I http://localhost:8080
 # HTTP/1.1 200 OK
 # Server: nginx/1.31.3
@@ -550,6 +534,8 @@ $ curl -I http://localhost:8080
 ### 바인드 마운트 검증 로그
 - 호스트의 파일을 컨테이너에 바인드 마운트
 ```bash
+# -v host_path:container_path: 호스트 디렉터리를 컨테이너 경로에 그대로 연결(바인드 마운트)
+# -it: 대화형 쉘로 접속(-i 표준 입력 유지 + -t 터미널 할당)
 $ docker run -v /Users/aaa9460994/codyssey-mission/E1/1/data:/data -it ubuntu bash
 ```
 - 컨테이너 내부에서 파일 생성
@@ -589,12 +575,15 @@ $ docker volume inspect codyssey-volume
 
 - 컨테이너 실행 시 볼륨 연결
 ```bash
+# -d: 백그라운드 실행 / --name: 컨테이너 이름 지정
+# -v volume_name:container_path: 이름 있는 Docker 볼륨을 컨테이너 경로에 연결(named volume)
 $ docker run -d --name codyssey-container -v codyssey-volume:/data ubuntu sleep infinity
 # 9a843ec5e35503e870a8d1869ba2431c884870c09c9a9bbcae144b27bfce4839
 ```
 
 - 컨테이너 내부에서 데이터 생성
 ```bash
+# -it: 실행 중인 컨테이너에 대화형 쉘로 접속(-i 표준 입력 유지 + -t 터미널 할당)
 $ docker exec -it codyssey-container bash
 # root@9a843ec5e355:/# echo "Persistent Data" > /data/data.txt
 # root@9a843ec5e355:/# exit
@@ -602,11 +591,13 @@ $ docker exec -it codyssey-container bash
 
 - 컨테이너 삭제
 ```bash
+# -f: 실행 중이어도 강제로 중지 후 삭제
 $ docker rm -f codyssey-container
 ```
 
 - 볼륨에 데이터가 남아있는지 확인
 ```bash
+# -it: 대화형 실행 / --rm: 컨테이너 종료 시 자동 삭제(볼륨 자체는 유지됨) / -v: 기존 볼륨 재연결
 $ docker run -it --rm -v codyssey-volume:/data ubuntu cat /data/data.txt
 # Persistent Data
 ```
@@ -641,6 +632,7 @@ $ git branch
 
 - 원격 저장소 확인
 ```bash
+# -v: 원격 저장소 이름과 함께 fetch/push URL을 상세히(verbose) 표시
 $ git remote -v
 # origin  https://github.com/Yoonsik-Shin/codyssey-mission.git (fetch)
 # origin  https://github.com/Yoonsik-Shin/codyssey-mission.git (push)
