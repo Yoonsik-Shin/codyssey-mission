@@ -100,9 +100,13 @@ class BonusQuizGame(QuizGame):
             "📌 삭제할 퀴즈 번호를 선택하세요.",
             "",
             *items,
+            "[0] 취소",
             "========================================"
         )
-        selected_idx = InputUtils.get_valid_int(f"삭제할 번호 (1-{len(self.quizzes)}): ", 1, len(self.quizzes))
+        selected_idx = InputUtils.get_valid_int(f"삭제할 번호 (0: 취소 / 1-{len(self.quizzes)}): ", 0, len(self.quizzes))
+        if selected_idx == 0:
+            OutputUtils.print_lines("", "↩️ 삭제를 취소했습니다.", "")
+            return
         removed_quiz = self.quizzes.pop(selected_idx - 1)
         self.save_current_state()
         OutputUtils.print_lines("", f"✅ [{removed_quiz.get_question()}] 퀴즈가 삭제되었습니다!", "")
