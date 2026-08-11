@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches and environments
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# Editor / tool artifacts
+tempCodeRunnerFile.py
+.vscode/
+
+# Temporary, backup & log files
+*.tmp
+*.bak
+logs/
