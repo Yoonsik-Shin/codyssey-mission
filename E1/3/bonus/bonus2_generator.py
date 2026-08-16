@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from main import Utils
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from mac_calculator import MacCalculator
 
 
 def generate_cross_pattern(n):
@@ -40,9 +40,9 @@ def demo_pattern_generator(n):
 
 def run_generated_judgement(n, cross, x, pattern_label):
     pattern = generate_cross_pattern(n) if pattern_label == "cross" else generate_x_pattern(n)
-    cross_score = Utils.calculate_mac(cross, pattern)
-    x_score = Utils.calculate_mac(x, pattern)
-    verdict = Utils.judge(cross_score, "Cross", x_score, "X")
+    cross_score = MacCalculator.calculate_2d(cross, pattern)
+    x_score = MacCalculator.calculate_2d(x, pattern)
+    verdict = MacCalculator.judge(cross_score, "Cross", x_score, "X")
 
     print(f"\n--- 생성된 {pattern_label} 패턴으로 판정 (모드1 재활용 예시) ---")
     print(f"Cross 점수: {cross_score}")
