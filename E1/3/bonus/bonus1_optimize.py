@@ -2,33 +2,10 @@ import sys
 import timeit
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from main import Utils
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from mac_calculator import MacCalculator
+from utils.matrix_utils import MatrixUtils
 from bonus2_generator import generate_cross_pattern
-
-
-def set_cell_1d(flat, row, col, value, n):
-    flat[row * n + col] = value
-
-
-def get_cell_1d(flat, row, col, n):
-    return flat[row * n + col]
-
-
-def flatten(matrix, n):
-    flat = [0.0] * (n * n)
-    for row in range(n):
-        for col in range(n):
-            value = Utils.get_cell(matrix, row, col)
-            set_cell_1d(flat, row, col, value, n)
-    return flat
-
-
-def calculate_mac_1d(filter_flat, pattern_flat):
-    total = 0
-    for f_val, p_val in zip(filter_flat, pattern_flat):
-        total += f_val * p_val
-    return total
 
 
 def benchmark_compare(sizes=(3, 5, 13, 25, 50, 100, 200, 400, 800), repeat=10):
@@ -41,11 +18,11 @@ def benchmark_compare(sizes=(3, 5, 13, 25, 50, 100, 200, 400, 800), repeat=10):
     for n in sizes:
         cross = generate_cross_pattern(n)
         pattern = generate_cross_pattern(n)
-        cross_flat = flatten(cross, n)
-        pattern_flat = flatten(pattern, n)
+        cross_flat = MatrixUtils.flatten(cross, n)
+        pattern_flat = MatrixUtils.flatten(pattern, n)
 
-        time_2d_sec = min(timeit.repeat(lambda: Utils.calculate_mac(cross, pattern), number=repeat, repeat=5))
-        time_1d_sec = min(timeit.repeat(lambda: calculate_mac_1d(cross_flat, pattern_flat), number=repeat, repeat=5))
+        time_2d_sec = min(timeit.repeat(lambda: MacCalculator.calculate_2d(cross, pattern), number=repeat, repeat=5))
+        time_1d_sec = min(timeit.repeat(lambda: MacCalculator.calculate_1d(cross_flat, pattern_flat), number=repeat, repeat=5))
 
         avg_2d_ms = time_2d_sec / repeat * 1000
         avg_1d_ms = time_1d_sec / repeat * 1000

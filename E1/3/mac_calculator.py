@@ -8,6 +8,13 @@ class MacCalculator:
         return filter_sum
 
     @staticmethod
+    def calculate_1d(filter_flat, pattern_flat):
+        total = 0
+        for f_val, p_val in zip(filter_flat, pattern_flat):
+            total += f_val * p_val
+        return total
+
+    @staticmethod
     def judge(score_a, label_a, score_b, label_b):
         if MacCalculator._is_same_value(score_a, score_b):
             return "UNDECIDED"
