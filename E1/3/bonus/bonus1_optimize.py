@@ -3,18 +3,17 @@ import timeit
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from mac_calculator import MacCalculator
 from utils.matrix_utils import MatrixUtils
-from bonus2_generator import generate_cross_pattern, generate_x_pattern
-
 
 def verify_sparse_correctness(sizes=(3, 5, 13, 25)):
     print("\n#---------------------------------------")
     print("# O(2N-1) 희소 연산 정확성 검증 (dense 결과와 비교)")
     print("#---------------------------------------")
     for n in sizes:
-        cross = generate_cross_pattern(n)
-        x = generate_x_pattern(n)
+        cross = MatrixUtils.generate_cross_pattern(n)
+        x = MatrixUtils.generate_x_pattern(n)
 
         cross_dense = MacCalculator.calculate_2d(cross, cross)
         cross_sparse = MacCalculator.calculate_cross_sparse(cross, cross, n)
@@ -35,8 +34,8 @@ def benchmark_compare_sparse(sizes=(3, 5, 13, 25, 50, 100, 200, 400, 800), repea
     print("-" * 56)
 
     for n in sizes:
-        cross = generate_cross_pattern(n)
-        x = generate_x_pattern(n)
+        cross = MatrixUtils.generate_cross_pattern(n)
+        x = MatrixUtils.generate_x_pattern(n)
 
         for label, matrix, sparse_fn in (
             ("Cross", cross, MacCalculator.calculate_cross_sparse),
@@ -60,8 +59,8 @@ def benchmark_compare(sizes=(3, 5, 13, 25, 50, 100, 200, 400, 800), repeat=10):
     print("-" * 44)
 
     for n in sizes:
-        cross = generate_cross_pattern(n)
-        pattern = generate_cross_pattern(n)
+        cross = MatrixUtils.generate_cross_pattern(n)
+        pattern = MatrixUtils.generate_cross_pattern(n)
         cross_flat = MatrixUtils.flatten(cross, n)
         pattern_flat = MatrixUtils.flatten(pattern, n)
 
