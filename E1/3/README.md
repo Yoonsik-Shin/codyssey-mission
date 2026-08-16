@@ -93,7 +93,17 @@ python bonus/bonus1_optimize.py    # 보너스1: 2D vs 1D vs O(2N-1) 희소 MAC 
 
 위 1D 최적화는 상수 인자(이터레이터 생성 오버헤드)만 줄일 뿐 여전히 N²회 곱셈-누적을 그대로 수행한다. 그런데 `generate_cross_pattern(n)`이 만드는 십자가 필터는 중심 행/열(`n//2`)에만 값이 있고 나머지 칸은 전부 0이라, 0이 아닌 칸은 정확히 `2n-1`개(중심 행 n개 + 중심 열 n개 − 겹치는 중심 칸 1개)뿐이다. 마찬가지로 `generate_x_pattern(n)`이 만드는 X 필터도 두 대각선 외 전부 0이라 0이 아닌 칸이 `2n-1`개(홀수 n 기준, 중심에서 두 대각선이 겹침)뿐이다. `MacCalculator.calculate_cross_sparse(filter_matrix, pattern_matrix, n)`/`calculate_x_sparse(filter_matrix, pattern_matrix, n)`는 이 사실을 이용해 나머지 칸은 아예 순회하지 않고 그 `2n-1`칸만 곱해서 더한다 — 시간복잡도가 O(N²)에서 O(2N-1), 즉 O(N)으로 낮아진다. 단, 이 최적화는 필터가 실제로 해당 모양(Cross는 중심 행/열, X는 두 대각선 외 전부 0)일 때만 유효하다는 전제가 있다 — 일반 필터에는 적용할 수 없다.
 
-`verify_sparse_correctness()`로 Cross/X 각각 dense(O(N²)) 결과와 값이 정확히 일치하는지 먼저 검증한 뒤, `benchmark_compare_sparse()`로 기존 O(N²)와 비교한 실측 결과(평균/10회, `timeit.repeat` 5세트 중 최솟값):
+N=7 기준으로 두 방식이 실제로 어떤 칸을 어떤 순서로 도는지 비교하면 다음과 같다(숫자는 방문 순서):
+
+![O(N²) vs O(2N-1) 매트릭스 순회 순서 비교 — 왼쪽은 49칸 전부를 행마다 좌→우로 훑고, 오른쪽은 중심 행 7칸(1~7)을 훑은 뒤 중심 열의 나머지 6칸(8~13)만 추가로 훑어 총 13칸만 방문한다](assets/bonus1_traversal_diagram.svg)
+
+왼쪽 `calculate_2d`는 이중 for문이라 예외 없이 모든 칸을 거치지만, 오른쪽 `calculate_cross_sparse`는 첫 번째 for문(중심 행)과 두 번째 for문(중심 열, 이미 방문한 중심 칸은 `if row != center`로 제외)만 실행되고 나머지 36칸은 코드상 아예 인덱싱조차 되지 않는다 — 즉 "적게 계산하는" 게 아니라 "애초에 안 건드리는" 최적화다.
+
+`verify_sparse_correctness()`로 Cross/X 각각 dense(O(N²)) 결과와 값이 정확히 일치하는지 먼저 검증한 뒤, `benchmark_compare_sparse()`로 기존 O(N²)와 비교한 실측 결과(평균/10회, `timeit.repeat` 5세트 중 최솟값). 왼쪽은 연산 시간을 로그 스케일로, 오른쪽은 개선율(%) 추이를 나타낸다:
+
+![O(N²) vs O(2N-1) MAC 연산 벤치마크 — 왼쪽: 로그 스케일 연산 시간(ms) 비교, 오른쪽: Cross/X 개선율(%) 추이](assets/bonus1_sparse_chart.svg)
+
+원본 수치는 아래 표와 같다:
 
 ```text
 크기        패턴      O(N²)(ms)     O(2N-1)(ms)   개선율
