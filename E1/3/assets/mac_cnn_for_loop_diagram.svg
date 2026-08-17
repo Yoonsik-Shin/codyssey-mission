@@ -1,0 +1,183 @@
+<svg class="viz-root" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="loop-title loop-desc" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <title id="loop-title">이중 for문에 따른 컨볼루션 동작 순서</title>
+  <desc id="loop-desc">바깥쪽 이중 for문(out_row, out_col)이 3×3 윈도우의 왼쪽-위 모서리를 5×5 입력 위에서 행 우선(row-major) 순서로 1번부터 9번까지 이동시키고, 그때마다 출력 특성맵의 대응 칸(2,3,2 / 3,5,3 / 2,3,2)을 채운다. 안쪽 이중 for문(kr, kc)은 1번 윈도우 내부에서 커널과 윈도우를 같은 순서로 훑으며 곱을 누적해 acc를 0,0,0,0,0,1,1,2,2로 키워 최종값 2를 만든다.</desc>
+
+  <defs>
+    <marker id="arrowLoop1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--series-1)"/>
+    </marker>
+    <marker id="arrowLoopJump" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+    </marker>
+  </defs>
+
+  <style>
+    .viz-root {
+      color-scheme: light;
+      --surface-1:      #fcfcfb;
+      --text-primary:   #0b0b0b;
+      --text-secondary: #52514e;
+      --muted:          #898781;
+      --gridline:       #e1e0d9;
+      --series-1:       #2a78d6;
+      --series-2:       #eb6834;
+      --series-3:       #3f9b5c;
+    }
+    @media (prefers-color-scheme: dark) {
+      .viz-root {
+        color-scheme: dark;
+        --surface-1:      #1a1a19;
+        --text-primary:   #ffffff;
+        --text-secondary: #c3c2b7;
+        --muted:          #898781;
+        --gridline:       #2c2c2a;
+        --series-1:       #3987e5;
+        --series-2:       #d95926;
+        --series-3:       #4fb571;
+      }
+    }
+    .bg        { fill: var(--surface-1); }
+    .title     { fill: var(--text-primary); font-size: 15px; font-weight: 700; }
+    .label     { fill: var(--text-secondary); font-size: 12px; font-weight: 600; }
+    .caption   { fill: var(--text-secondary); font-size: 12px; }
+    .note      { fill: var(--muted); font-size: 10.5px; }
+    .cell      { fill: var(--surface-1); stroke: var(--gridline); stroke-width: 1; }
+    .cellVal   { fill: var(--text-primary); font-size: 13px; text-anchor: middle; dominant-baseline: central; }
+    .win1      { fill: var(--series-1); fill-opacity: 0.14; stroke: var(--series-1); stroke-width: 2.5; }
+    .win2      { fill: var(--series-2); fill-opacity: 0.12; stroke: var(--series-2); stroke-width: 2.5; stroke-dasharray: 5 3; }
+    .stepnode  { fill: var(--surface-1); stroke: var(--series-1); stroke-width: 1.4; }
+    .stepnum   { fill: var(--series-1); font-size: 10px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+    .arrowline { stroke: var(--series-1); stroke-width: 1.4; fill: none; }
+    .jumpline  { stroke: var(--muted); stroke-width: 1.4; fill: none; stroke-dasharray: 4 3; }
+    .outCell   { fill: var(--series-3); fill-opacity: 0.14; stroke: var(--series-3); stroke-width: 1.5; }
+    .outVal    { fill: var(--text-primary); font-size: 19px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+    .badge     { fill: var(--surface-1); stroke: var(--muted); stroke-width: 1; }
+    .badgeNum  { fill: var(--text-secondary); font-size: 8.5px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+    .tblLabel  { fill: var(--text-secondary); font-size: 11px; }
+    .tblHead   { fill: var(--muted); font-size: 11px; text-anchor: middle; font-weight: 700; }
+    .tblVal    { fill: var(--text-primary); font-size: 12px; text-anchor: middle; }
+    .tblValFin { fill: var(--series-3); font-size: 12px; text-anchor: middle; font-weight: 700; }
+    .opCircle  { fill: var(--surface-1); stroke: var(--text-secondary); stroke-width: 1.2; }
+    .opText    { fill: var(--text-primary); font-size: 12px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1000" height="600"/>
+
+  <text class="title" x="24" y="26">이중 for문에 따른 컨볼루션 동작 순서</text>
+
+  <!-- ============ Panel 1: outer loop — window sliding order ============ -->
+  <text class="label" x="40" y="55">① 바깥쪽 for문 (out_row, out_col) — 윈도우가 이동하는 순서</text>
+  <g>
+    <!-- blank 5x5 grid -->
+    <rect class="cell" x="40" y="70" width="34" height="34"/><rect class="cell" x="74" y="70" width="34" height="34"/><rect class="cell" x="108" y="70" width="34" height="34"/><rect class="cell" x="142" y="70" width="34" height="34"/><rect class="cell" x="176" y="70" width="34" height="34"/>
+    <rect class="cell" x="40" y="104" width="34" height="34"/><rect class="cell" x="74" y="104" width="34" height="34"/><rect class="cell" x="108" y="104" width="34" height="34"/><rect class="cell" x="142" y="104" width="34" height="34"/><rect class="cell" x="176" y="104" width="34" height="34"/>
+    <rect class="cell" x="40" y="138" width="34" height="34"/><rect class="cell" x="74" y="138" width="34" height="34"/><rect class="cell" x="108" y="138" width="34" height="34"/><rect class="cell" x="142" y="138" width="34" height="34"/><rect class="cell" x="176" y="138" width="34" height="34"/>
+    <rect class="cell" x="40" y="172" width="34" height="34"/><rect class="cell" x="74" y="172" width="34" height="34"/><rect class="cell" x="108" y="172" width="34" height="34"/><rect class="cell" x="142" y="172" width="34" height="34"/><rect class="cell" x="176" y="172" width="34" height="34"/>
+    <rect class="cell" x="40" y="206" width="34" height="34"/><rect class="cell" x="74" y="206" width="34" height="34"/><rect class="cell" x="108" y="206" width="34" height="34"/><rect class="cell" x="142" y="206" width="34" height="34"/><rect class="cell" x="176" y="206" width="34" height="34"/>
+
+    <!-- window at step 1 (anchor 0,0) and step 9 (anchor 2,2) -->
+    <rect class="win1" x="40" y="70" width="102" height="102"/>
+    <rect class="win2" x="108" y="138" width="102" height="102"/>
+
+    <!-- traversal arrows: 1-2-3 (row0), jump to 4, 4-5-6 (row1), jump to 7, 7-8-9 (row2) -->
+    <path class="arrowline" d="M 68 87 L 80 87" marker-end="url(#arrowLoop1)"/>
+    <path class="arrowline" d="M 102 87 L 114 87" marker-end="url(#arrowLoop1)"/>
+    <path class="jumpline"  d="M 125 98 C 145 108, 70 108, 57 110" marker-end="url(#arrowLoopJump)"/>
+    <path class="arrowline" d="M 68 121 L 80 121" marker-end="url(#arrowLoop1)"/>
+    <path class="arrowline" d="M 102 121 L 114 121" marker-end="url(#arrowLoop1)"/>
+    <path class="jumpline"  d="M 125 132 C 145 142, 70 142, 57 144" marker-end="url(#arrowLoopJump)"/>
+    <path class="arrowline" d="M 68 155 L 80 155" marker-end="url(#arrowLoop1)"/>
+    <path class="arrowline" d="M 102 155 L 114 155" marker-end="url(#arrowLoop1)"/>
+
+    <!-- step number nodes -->
+    <circle class="stepnode" cx="57" cy="87" r="11"/><text class="stepnum" x="57" y="88">1</text>
+    <circle class="stepnode" cx="91" cy="87" r="11"/><text class="stepnum" x="91" y="88">2</text>
+    <circle class="stepnode" cx="125" cy="87" r="11"/><text class="stepnum" x="125" y="88">3</text>
+    <circle class="stepnode" cx="57" cy="121" r="11"/><text class="stepnum" x="57" y="122">4</text>
+    <circle class="stepnode" cx="91" cy="121" r="11"/><text class="stepnum" x="91" y="122">5</text>
+    <circle class="stepnode" cx="125" cy="121" r="11"/><text class="stepnum" x="125" y="122">6</text>
+    <circle class="stepnode" cx="57" cy="155" r="11"/><text class="stepnum" x="57" y="156">7</text>
+    <circle class="stepnode" cx="91" cy="155" r="11"/><text class="stepnum" x="91" y="156">8</text>
+    <circle class="stepnode" cx="125" cy="155" r="11"/><text class="stepnum" x="125" y="156">9</text>
+  </g>
+  <text class="note" x="40" y="256">실선 파랑 = 1번째 윈도우, 점선 주황 = 9번째(마지막) 윈도우. 3·4행/열은 윈도우 시작점이 될 수 없다(out_h=out_w=3).</text>
+
+  <!-- ============ Panel 2: output feature map filled in loop order ============ -->
+  <text class="label" x="680" y="55">② 출력 특성맵 — 채워지는 순서 = ①번 순서</text>
+  <g>
+    <rect class="outCell" x="680" y="70" width="50" height="50"/><text class="badgeNum" x="691" y="83" fill="var(--series-3)">1</text><text class="outVal" x="705" y="98">2</text>
+    <rect class="outCell" x="730" y="70" width="50" height="50"/><text class="badgeNum" x="741" y="83" fill="var(--series-3)">2</text><text class="outVal" x="755" y="98">3</text>
+    <rect class="outCell" x="780" y="70" width="50" height="50"/><text class="badgeNum" x="791" y="83" fill="var(--series-3)">3</text><text class="outVal" x="805" y="98">2</text>
+
+    <rect class="outCell" x="680" y="120" width="50" height="50"/><text class="badgeNum" x="691" y="133" fill="var(--series-3)">4</text><text class="outVal" x="705" y="148">3</text>
+    <rect class="outCell" x="730" y="120" width="50" height="50"/><text class="badgeNum" x="741" y="133" fill="var(--series-3)">5</text><text class="outVal" x="755" y="148">5</text>
+    <rect class="outCell" x="780" y="120" width="50" height="50"/><text class="badgeNum" x="791" y="133" fill="var(--series-3)">6</text><text class="outVal" x="805" y="148">3</text>
+
+    <rect class="outCell" x="680" y="170" width="50" height="50"/><text class="badgeNum" x="691" y="183" fill="var(--series-3)">7</text><text class="outVal" x="705" y="198">2</text>
+    <rect class="outCell" x="730" y="170" width="50" height="50"/><text class="badgeNum" x="741" y="183" fill="var(--series-3)">8</text><text class="outVal" x="755" y="198">3</text>
+    <rect class="outCell" x="780" y="170" width="50" height="50"/><text class="badgeNum" x="791" y="183" fill="var(--series-3)">9</text><text class="outVal" x="805" y="198">2</text>
+  </g>
+  <text class="note" x="680" y="240">칸 왼쪽-위 작은 숫자 = 채워진 단계, 가운데 큰 숫자 = MAC 결과값</text>
+
+  <!-- ============ Panel 3: inner loop — MAC inside window 1 ============ -->
+  <text class="label" x="40" y="300">③ 안쪽 for문 (kr, kc) — ①번 윈도우 내부에서 MAC이 계산되는 순서</text>
+
+  <g>
+    <!-- window1 values with corner step badges -->
+    <rect class="cell" x="40" y="320" width="38" height="38"/><text class="cellVal" x="59" y="339">0</text><circle class="badge" cx="49" cy="329" r="7"/><text class="badgeNum" x="49" y="330">1</text>
+    <rect class="cell" x="78" y="320" width="38" height="38"/><text class="cellVal" x="97" y="339">0</text><circle class="badge" cx="87" cy="329" r="7"/><text class="badgeNum" x="87" y="330">2</text>
+    <rect class="cell" x="116" y="320" width="38" height="38"/><text class="cellVal" x="135" y="339">1</text><circle class="badge" cx="125" cy="329" r="7"/><text class="badgeNum" x="125" y="330">3</text>
+
+    <rect class="cell" x="40" y="358" width="38" height="38"/><text class="cellVal" x="59" y="377">0</text><circle class="badge" cx="49" cy="367" r="7"/><text class="badgeNum" x="49" y="368">4</text>
+    <rect class="cell" x="78" y="358" width="38" height="38"/><text class="cellVal" x="97" y="377">0</text><circle class="badge" cx="87" cy="367" r="7"/><text class="badgeNum" x="87" y="368">5</text>
+    <rect class="cell" x="116" y="358" width="38" height="38"/><text class="cellVal" x="135" y="377">1</text><circle class="badge" cx="125" cy="367" r="7"/><text class="badgeNum" x="125" y="368">6</text>
+
+    <rect class="cell" x="40" y="396" width="38" height="38"/><text class="cellVal" x="59" y="415">1</text><circle class="badge" cx="49" cy="405" r="7"/><text class="badgeNum" x="49" y="406">7</text>
+    <rect class="cell" x="78" y="396" width="38" height="38"/><text class="cellVal" x="97" y="415">1</text><circle class="badge" cx="87" cy="405" r="7"/><text class="badgeNum" x="87" y="406">8</text>
+    <rect class="cell" x="116" y="396" width="38" height="38"/><text class="cellVal" x="135" y="415">1</text><circle class="badge" cx="125" cy="405" r="7"/><text class="badgeNum" x="125" y="406">9</text>
+  </g>
+  <text class="note" x="40" y="450">윈도우(①번, out_row=0, out_col=0)</text>
+
+  <circle class="opCircle" cx="177" cy="377" r="14"/><text class="opText" x="177" y="378">×</text>
+
+  <g>
+    <!-- kernel values with matching step badges (same kr,kc index, read simultaneously) -->
+    <rect class="cell" x="200" y="320" width="38" height="38"/><text class="cellVal" x="219" y="339">0</text><circle class="badge" cx="209" cy="329" r="7"/><text class="badgeNum" x="209" y="330">1</text>
+    <rect class="cell" x="238" y="320" width="38" height="38"/><text class="cellVal" x="257" y="339">1</text><circle class="badge" cx="247" cy="329" r="7"/><text class="badgeNum" x="247" y="330">2</text>
+    <rect class="cell" x="276" y="320" width="38" height="38"/><text class="cellVal" x="295" y="339">0</text><circle class="badge" cx="285" cy="329" r="7"/><text class="badgeNum" x="285" y="330">3</text>
+
+    <rect class="cell" x="200" y="358" width="38" height="38"/><text class="cellVal" x="219" y="377">1</text><circle class="badge" cx="209" cy="367" r="7"/><text class="badgeNum" x="209" y="368">4</text>
+    <rect class="cell" x="238" y="358" width="38" height="38"/><text class="cellVal" x="257" y="377">1</text><circle class="badge" cx="247" cy="367" r="7"/><text class="badgeNum" x="247" y="368">5</text>
+    <rect class="cell" x="276" y="358" width="38" height="38"/><text class="cellVal" x="295" y="377">1</text><circle class="badge" cx="285" cy="367" r="7"/><text class="badgeNum" x="285" y="368">6</text>
+
+    <rect class="cell" x="200" y="396" width="38" height="38"/><text class="cellVal" x="219" y="415">0</text><circle class="badge" cx="209" cy="405" r="7"/><text class="badgeNum" x="209" y="406">7</text>
+    <rect class="cell" x="238" y="396" width="38" height="38"/><text class="cellVal" x="257" y="415">1</text><circle class="badge" cx="247" cy="405" r="7"/><text class="badgeNum" x="247" y="406">8</text>
+    <rect class="cell" x="276" y="396" width="38" height="38"/><text class="cellVal" x="295" y="415">0</text><circle class="badge" cx="285" cy="405" r="7"/><text class="badgeNum" x="285" y="406">9</text>
+  </g>
+  <text class="note" x="200" y="450">커널 (고정, 같은 kr,kc로 동시에 읽힘)</text>
+
+  <!-- trace table: per-step product and running accumulator -->
+  <g>
+    <text class="tblLabel" x="360" y="333">단계(kr,kc)</text>
+    <text class="tblHead" x="410" y="333">1</text><text class="tblHead" x="452" y="333">2</text><text class="tblHead" x="494" y="333">3</text><text class="tblHead" x="536" y="333">4</text><text class="tblHead" x="578" y="333">5</text><text class="tblHead" x="620" y="333">6</text><text class="tblHead" x="662" y="333">7</text><text class="tblHead" x="704" y="333">8</text><text class="tblHead" x="746" y="333">9</text>
+
+    <line x1="355" y1="342" x2="770" y2="342" stroke="var(--gridline)" stroke-width="1"/>
+
+    <text class="tblLabel" x="360" y="363">곱(kernel×window)</text>
+    <text class="tblVal" x="410" y="363">0</text><text class="tblVal" x="452" y="363">0</text><text class="tblVal" x="494" y="363">0</text><text class="tblVal" x="536" y="363">0</text><text class="tblVal" x="578" y="363">0</text><text class="tblVal" x="620" y="363">1</text><text class="tblVal" x="662" y="363">0</text><text class="tblVal" x="704" y="363">1</text><text class="tblVal" x="746" y="363">0</text>
+
+    <line x1="355" y1="372" x2="770" y2="372" stroke="var(--gridline)" stroke-width="1"/>
+
+    <text class="tblLabel" x="360" y="393">누적 acc</text>
+    <text class="tblVal" x="410" y="393">0</text><text class="tblVal" x="452" y="393">0</text><text class="tblVal" x="494" y="393">0</text><text class="tblVal" x="536" y="393">0</text><text class="tblVal" x="578" y="393">0</text><text class="tblVal" x="620" y="393">1</text><text class="tblVal" x="662" y="393">1</text><text class="tblVal" x="704" y="393">2</text><text class="tblValFin" x="746" y="393">2</text>
+  </g>
+  <text class="note" x="360" y="420">acc(=2)가 안쪽 for문 종료 후 출력[0][0]에 저장된다 (②번 그림 1번 칸과 동일)</text>
+
+  <!-- ============ Caption ============ -->
+  <g class="caption">
+    <text x="24" y="475">바깥쪽 for문(out_row, out_col)은 "어느 출력 칸을 채울지"(=윈도우가 어디 있는지)를 정하고, 안쪽 for문(kr, kc)은 그 위치에서</text>
+    <text x="24" y="495">"MAC 값을 어떻게 계산할지"를 정한다 — 안쪽 for문이 9번(3×3) 돌 때마다 acc 하나가 완성되어 출력 한 칸이 채워지고,</text>
+    <text x="24" y="515">바깥쪽 for문이 다음 윈도우로 넘어가 이 과정을 다시 9번(3×3 출력) 반복한다. 이 프로젝트의 calculate_2d는 필터와</text>
+    <text x="24" y="535">패턴 크기가 같아 바깥쪽 for문이 사실상 1번만 도는(out_h=out_w=1) 특수 케이스이고, 안쪽 for문(kr,kc)만 그대로 남는다.</text>
+  </g>
+</svg>

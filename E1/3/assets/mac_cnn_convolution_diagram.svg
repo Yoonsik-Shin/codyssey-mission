@@ -1,0 +1,152 @@
+<svg class="viz-root" viewBox="0 0 940 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cnn-title cnn-desc" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <title id="cnn-title">CNN 컨볼루션 = MAC 연산의 슬라이딩 반복</title>
+  <desc id="cnn-desc">5×5 Cross 입력 위에서 3×3 Cross 커널이 한 칸씩 슬라이딩하며 MAC(원소별 곱 후 합산)을 반복해 3×3 출력 특성맵을 채우는 과정을 보여준다. 첫 번째 윈도우(열0~2)는 커널과 곱해서 합산하면 2, 한 칸 오른쪽으로 슬라이딩한 두 번째 윈도우(열1~3)는 3이 되어 각각 출력의 (0,0), (0,1) 칸에 채워진다.</desc>
+
+  <defs>
+    <marker id="arrowS1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--series-1)"/>
+    </marker>
+    <marker id="arrowS2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--series-2)"/>
+    </marker>
+  </defs>
+
+  <style>
+    .viz-root {
+      color-scheme: light;
+      --surface-1:      #fcfcfb;
+      --text-primary:   #0b0b0b;
+      --text-secondary: #52514e;
+      --muted:          #898781;
+      --gridline:       #e1e0d9;
+      --series-1:       #2a78d6;
+      --series-2:       #eb6834;
+    }
+    @media (prefers-color-scheme: dark) {
+      .viz-root {
+        color-scheme: dark;
+        --surface-1:      #1a1a19;
+        --text-primary:   #ffffff;
+        --text-secondary: #c3c2b7;
+        --muted:          #898781;
+        --gridline:       #2c2c2a;
+        --series-1:       #3987e5;
+        --series-2:       #d95926;
+      }
+    }
+    .bg        { fill: var(--surface-1); }
+    .title     { fill: var(--text-primary); font-size: 15px; font-weight: 700; }
+    .label     { fill: var(--text-secondary); font-size: 12px; font-weight: 600; }
+    .legend    { fill: var(--text-secondary); font-size: 11px; }
+    .caption   { fill: var(--text-secondary); font-size: 12px; }
+    .note      { fill: var(--muted); font-size: 10.5px; }
+    .cell      { fill: var(--surface-1); stroke: var(--gridline); stroke-width: 1; }
+    .cellVal   { fill: var(--text-primary); font-size: 12px; text-anchor: middle; dominant-baseline: central; }
+    .cellValMuted { fill: var(--muted); font-size: 12px; text-anchor: middle; dominant-baseline: central; }
+    .win1      { fill: var(--series-1); fill-opacity: 0.16; stroke: var(--series-1); stroke-width: 2.5; }
+    .win2      { fill: var(--series-2); fill-opacity: 0.14; stroke: var(--series-2); stroke-width: 2.5; stroke-dasharray: 5 3; }
+    .outFilled1{ fill: var(--series-1); fill-opacity: 0.30; stroke: var(--series-1); stroke-width: 2; }
+    .outFilled2{ fill: var(--series-2); fill-opacity: 0.26; stroke: var(--series-2); stroke-width: 2; }
+    .opNode    { fill: var(--surface-1); stroke: var(--text-secondary); stroke-width: 1.3; }
+    .opText    { fill: var(--text-primary); font-size: 13px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+    .arrow1    { stroke: var(--series-1); stroke-width: 1.8; fill: none; }
+    .arrow2    { stroke: var(--series-2); stroke-width: 1.8; fill: none; stroke-dasharray: 5 3; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="940" height="500"/>
+
+  <text class="title" x="24" y="26">CNN 컨볼루션 = MAC 연산의 슬라이딩 반복</text>
+
+  <!-- ============ Input 5x5 grid ============ -->
+  <text class="label" x="40" y="55">입력 (5×5) — Cross 패턴</text>
+  <g>
+    <!-- row0: 0 0 1 0 0 -->
+    <rect class="cell" x="40"  y="70" width="34" height="34"/><text class="cellVal" x="57"  y="87">0</text>
+    <rect class="cell" x="74"  y="70" width="34" height="34"/><text class="cellVal" x="91"  y="87">0</text>
+    <rect class="cell" x="108" y="70" width="34" height="34"/><text class="cellVal" x="125" y="87">1</text>
+    <rect class="cell" x="142" y="70" width="34" height="34"/><text class="cellVal" x="159" y="87">0</text>
+    <rect class="cell" x="176" y="70" width="34" height="34"/><text class="cellVal" x="193" y="87">0</text>
+    <!-- row1: 0 0 1 0 0 -->
+    <rect class="cell" x="40"  y="104" width="34" height="34"/><text class="cellVal" x="57"  y="121">0</text>
+    <rect class="cell" x="74"  y="104" width="34" height="34"/><text class="cellVal" x="91"  y="121">0</text>
+    <rect class="cell" x="108" y="104" width="34" height="34"/><text class="cellVal" x="125" y="121">1</text>
+    <rect class="cell" x="142" y="104" width="34" height="34"/><text class="cellVal" x="159" y="121">0</text>
+    <rect class="cell" x="176" y="104" width="34" height="34"/><text class="cellVal" x="193" y="121">0</text>
+    <!-- row2: 1 1 1 1 1 -->
+    <rect class="cell" x="40"  y="138" width="34" height="34"/><text class="cellVal" x="57"  y="155">1</text>
+    <rect class="cell" x="74"  y="138" width="34" height="34"/><text class="cellVal" x="91"  y="155">1</text>
+    <rect class="cell" x="108" y="138" width="34" height="34"/><text class="cellVal" x="125" y="155">1</text>
+    <rect class="cell" x="142" y="138" width="34" height="34"/><text class="cellVal" x="159" y="155">1</text>
+    <rect class="cell" x="176" y="138" width="34" height="34"/><text class="cellVal" x="193" y="155">1</text>
+    <!-- row3: 0 0 1 0 0 -->
+    <rect class="cell" x="40"  y="172" width="34" height="34"/><text class="cellVal" x="57"  y="189">0</text>
+    <rect class="cell" x="74"  y="172" width="34" height="34"/><text class="cellVal" x="91"  y="189">0</text>
+    <rect class="cell" x="108" y="172" width="34" height="34"/><text class="cellVal" x="125" y="189">1</text>
+    <rect class="cell" x="142" y="172" width="34" height="34"/><text class="cellVal" x="159" y="189">0</text>
+    <rect class="cell" x="176" y="172" width="34" height="34"/><text class="cellVal" x="193" y="189">0</text>
+    <!-- row4: 0 0 1 0 0 -->
+    <rect class="cell" x="40"  y="206" width="34" height="34"/><text class="cellVal" x="57"  y="223">0</text>
+    <rect class="cell" x="74"  y="206" width="34" height="34"/><text class="cellVal" x="91"  y="223">0</text>
+    <rect class="cell" x="108" y="206" width="34" height="34"/><text class="cellVal" x="125" y="223">1</text>
+    <rect class="cell" x="142" y="206" width="34" height="34"/><text class="cellVal" x="159" y="223">0</text>
+    <rect class="cell" x="176" y="206" width="34" height="34"/><text class="cellVal" x="193" y="223">0</text>
+
+    <!-- sliding windows overlaid on rows 0-2 -->
+    <rect class="win1" x="40" y="70" width="102" height="102"/>
+    <rect class="win2" x="74" y="70" width="102" height="102"/>
+  </g>
+
+  <!-- ============ Kernel 3x3 ============ -->
+  <text class="label" x="300" y="55">커널/필터 (3×3, 고정)</text>
+  <g>
+    <rect class="cell" x="300" y="70" width="34" height="34"/><text class="cellVal" x="317" y="87">0</text>
+    <rect class="cell" x="334" y="70" width="34" height="34"/><text class="cellVal" x="351" y="87">1</text>
+    <rect class="cell" x="368" y="70" width="34" height="34"/><text class="cellVal" x="385" y="87">0</text>
+
+    <rect class="cell" x="300" y="104" width="34" height="34"/><text class="cellVal" x="317" y="121">1</text>
+    <rect class="cell" x="334" y="104" width="34" height="34"/><text class="cellVal" x="351" y="121">1</text>
+    <rect class="cell" x="368" y="104" width="34" height="34"/><text class="cellVal" x="385" y="121">1</text>
+
+    <rect class="cell" x="300" y="138" width="34" height="34"/><text class="cellVal" x="317" y="155">0</text>
+    <rect class="cell" x="334" y="138" width="34" height="34"/><text class="cellVal" x="351" y="155">1</text>
+    <rect class="cell" x="368" y="138" width="34" height="34"/><text class="cellVal" x="385" y="155">0</text>
+  </g>
+  <text class="note" x="300" y="192">원소별 곱(Multiply) 후 합산(Accumulate) = MAC</text>
+
+  <!-- ============ Output 3x3 feature map ============ -->
+  <text class="label" x="560" y="55">출력 특성맵 (3×3)</text>
+  <g>
+    <rect class="outFilled1" x="560" y="70" width="34" height="34"/><text class="cellVal" x="577" y="87">2</text>
+    <rect class="outFilled2" x="594" y="70" width="34" height="34"/><text class="cellVal" x="611" y="87">3</text>
+    <rect class="cell" x="628" y="70" width="34" height="34"/><text class="cellValMuted" x="645" y="87">…</text>
+
+    <rect class="cell" x="560" y="104" width="34" height="34"/><text class="cellValMuted" x="577" y="121">…</text>
+    <rect class="cell" x="594" y="104" width="34" height="34"/><text class="cellValMuted" x="611" y="121">…</text>
+    <rect class="cell" x="628" y="104" width="34" height="34"/><text class="cellValMuted" x="645" y="121">…</text>
+
+    <rect class="cell" x="560" y="138" width="34" height="34"/><text class="cellValMuted" x="577" y="155">…</text>
+    <rect class="cell" x="594" y="138" width="34" height="34"/><text class="cellValMuted" x="611" y="155">…</text>
+    <rect class="cell" x="628" y="138" width="34" height="34"/><text class="cellValMuted" x="645" y="155">…</text>
+  </g>
+  <text class="note" x="560" y="248">슬라이딩을 계속하면 나머지 칸(…)도 같은 방식으로 채워진다</text>
+
+  <!-- ============ Arrows: window1 -> kernel -> output(0,0) ============ -->
+  <line class="arrow1" x1="142" y1="121" x2="296" y2="121" marker-end="url(#arrowS1)"/>
+  <circle class="opNode" cx="221" cy="121" r="12"/><text class="opText" x="221" y="122">×</text>
+
+  <path class="arrow1" d="M 402 121 C 440 121, 470 100, 558 90" marker-end="url(#arrowS1)"/>
+  <circle class="opNode" cx="432" cy="121" r="12"/><text class="opText" x="432" y="122">Σ</text>
+
+  <!-- ============ Arrow: window2 -> output(0,1), sliding + repeat ============ -->
+  <path class="arrow2" d="M 176 182 C 320 250, 520 250, 609 102" marker-end="url(#arrowS2)"/>
+  <text class="legend" x="330" y="245" fill="var(--series-2)">1칸 슬라이딩 후 같은 커널로 MAC 반복 → 출력(0,1) = 3</text>
+
+  <!-- ============ Caption ============ -->
+  <g class="caption">
+    <text x="24" y="290">커널(필터)이 입력 위를 한 칸씩 슬라이딩하며, 겹치는 3×3 영역과 커널을 원소별로 곱해서(Multiply) 모두 더한(Accumulate)</text>
+    <text x="24" y="310">값 하나가 출력 특성맵의 한 칸이 된다. 이것이 CNN 컨볼루션의 정의이며, 이 프로젝트의 MAC 연산과 완전히 같은 계산이다.</text>
+    <text x="24" y="340">차이는 "슬라이딩 여부"뿐이다 — 이 프로젝트의 calculate_2d는 필터와 패턴 크기가 항상 같아서 슬라이딩할 자리가 1칸</text>
+    <text x="24" y="360">(출력이 1×1)뿐인 컨볼루션의 특수 케이스다. 반면 실제 CNN은 커널보다 훨씬 큰 입력 위를 슬라이딩하며 이 MAC을</text>
+    <text x="24" y="380">수백~수만 번 반복해 전체 특성맵을 채우고, 그래서 NPU/GPU는 이 MAC 연산 하나의 처리 속도를 수천 개 병렬 유닛으로 늘린다.</text>
+  </g>
+</svg>
