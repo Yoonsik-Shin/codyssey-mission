@@ -9,3 +9,4 @@ class OutputUtils:
             else:
                 flattened.append(str(line))
         print("\n".join(flattened))
+

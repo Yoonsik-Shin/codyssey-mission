@@ -6,11 +6,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mac_calculator import MacCalculator
 from utils.matrix_utils import MatrixUtils
+from utils.output_utils import OutputUtils
 
 def verify_sparse_correctness(sizes=(3, 5, 13, 25)):
-    print("\n#---------------------------------------")
-    print("# O(2N-1) 희소 연산 정확성 검증 (dense 결과와 비교)")
-    print("#---------------------------------------")
+    OutputUtils.print_lines(
+        "",
+        "#---------------------------------------",
+        "# O(2N-1) 희소 연산 정확성 검증 (dense 결과와 비교)",
+        "#---------------------------------------",
+        f"{'크기':<10}{'패턴':<8}{'dense':<14}{'sparse':<14}{'검증':<10}",
+        "-" * 56
+    )
     for n in sizes:
         cross = MatrixUtils.generate_cross_pattern(n)
         x = MatrixUtils.generate_x_pattern(n)
@@ -27,11 +33,14 @@ def verify_sparse_correctness(sizes=(3, 5, 13, 25)):
 
 
 def benchmark_compare_sparse(sizes=(3, 5, 13, 25, 50, 100, 200, 400, 800), repeat=10):
-    print("\n#---------------------------------------")
-    print(f"# O(N²) vs O(2N-1) 희소 연산 성능 비교 (Cross/X 필터, 평균/{repeat}회)")
-    print("#---------------------------------------")
-    print(f"{'크기':<10}{'패턴':<8}{'O(N²)(ms)':<14}{'O(2N-1)(ms)':<14}{'개선율':<10}")
-    print("-" * 56)
+    OutputUtils.print_lines(
+        "",
+        "#---------------------------------------",
+        "# O(N²) vs O(2N-1) 희소 연산 성능 비교 (Cross/X 필터, 평균/{repeat}회)",
+        "#---------------------------------------",
+        f"{'크기':<10}{'패턴':<8}{'O(N²)(ms)':<14}{'O(2N-1)(ms)':<14}{'개선율':<10}",
+        "-" * 56
+    )
 
     for n in sizes:
         cross = MatrixUtils.generate_cross_pattern(n)
@@ -52,11 +61,14 @@ def benchmark_compare_sparse(sizes=(3, 5, 13, 25, 50, 100, 200, 400, 800), repea
 
 
 def benchmark_compare(sizes=(3, 5, 13, 25, 50, 100, 200, 400, 800), repeat=10):
-    print("\n#---------------------------------------")
-    print(f"# 최적화 전(2D) vs 후(1D) 성능 비교 (평균/{repeat}회)")
-    print("#---------------------------------------")
-    print(f"{'크기':<10}{'2D(ms)':<12}{'1D(ms)':<12}{'개선율':<10}")
-    print("-" * 44)
+    OutputUtils.print_lines(
+        "",
+        "#---------------------------------------",
+        "# 2D 배열 vs 1D 배열 메모리 접근 최적화 성능 비교 (평균/{repeat}회)",
+        "#---------------------------------------",
+        f"{'크기':<10}{'2D(ms)':<12}{'1D(ms)':<12}{'개선율':<10}",
+        "-" * 44
+    )
 
     for n in sizes:
         cross = MatrixUtils.generate_cross_pattern(n)
