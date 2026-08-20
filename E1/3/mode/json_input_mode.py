@@ -1,9 +1,9 @@
-import timeit
 import json
 from pathlib import Path
 
 from mac_calculator import MacCalculator
 from utils.output_utils import OutputUtils
+from utils.benchmark_utils import BenchmarkUtils
 from label_normalizer import LabelNormalizer
 
 def json_input_mode():
@@ -93,7 +93,7 @@ def json_input_mode():
         if expected_label is None:
             result = "FAIL (expected 라벨 인식 불가)"
             failed_cases.append((p_key, f"expected 라벨 인식 불가: {p_val.get('expected')!r}"))
-        elif verdict == "UNDECIDED":
+        elif MacCalculator.is_undecided(verdict):
             result = "FAIL (동점 규칙)"
             failed_cases.append((p_key, "동점(UNDECIDED) 처리 규칙에 따라 FAIL"))
         elif verdict == expected_label:
@@ -125,11 +125,10 @@ def json_input_mode():
             bench_filter = [[1.0] * n for _ in range(n)]
             bench_pattern = [[1.0] * n for _ in range(n)]
 
-        total_time_sec = timeit.timeit(
+        avg_time_ms = BenchmarkUtils.measure_avg_ms(
             lambda bf=bench_filter, bp=bench_pattern: MacCalculator.calculate_2d(bf, bp),
             number=10
         )
-        avg_time_ms = (total_time_sec / 10) * 1000
         print_lines.append(f"{n}×{n}        {avg_time_ms:.3f}          {n * n}")
 
     print_lines.extend([

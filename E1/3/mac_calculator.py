@@ -1,4 +1,7 @@
 class MacCalculator:
+    UNDECIDED = "UNDECIDED"
+    TIE_EPSILON = 1e-9
+
     @staticmethod
     def calculate_2d(filter_matrix, pattern_matrix):
         filter_sum = 0
@@ -42,9 +45,13 @@ class MacCalculator:
     @staticmethod
     def judge(score_a, label_a, score_b, label_b):
         if MacCalculator._is_same_value(score_a, score_b):
-            return "UNDECIDED"
+            return MacCalculator.UNDECIDED
         return label_a if score_a > score_b else label_b
 
     @staticmethod
+    def is_undecided(verdict):
+        return verdict == MacCalculator.UNDECIDED
+
+    @staticmethod
     def _is_same_value(v1, v2):
-        return abs(v1 - v2) < 1e-9
+        return abs(v1 - v2) < MacCalculator.TIE_EPSILON
