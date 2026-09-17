@@ -118,7 +118,7 @@ function initScrollEffects() {
  * - 현재 보고 있는 섹션 메뉴 하이라이트
  */
 function initIntersectionObserver() {
-  const sections = document.querySelectorAll("main section");
+  const sections = document.querySelectorAll(".reveal");
   const navLinks = document.querySelectorAll(".nav-link");
 
   const observerOptions = {
