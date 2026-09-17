@@ -4,8 +4,6 @@
 
 // 1. 웹 컴포넌트 등록
 import "./components/HeroSection.js";
-import "./components/GreetingsText.js";
-import "./components/CtaButton.js";
 import "./components/AboutSection.js";
 import "./components/SkillsSection.js";
 import "./components/ProjectsSection.js";
@@ -16,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initNavigation();
   initScrollEffects();
   initIntersectionObserver();
-  initCtaButton();
 });
 
 /**
@@ -152,13 +149,4 @@ function initIntersectionObserver() {
   sections.forEach((section) => observer.observe(section));
 }
 
-/**
- * 6. CTA 버튼 스크롤 연동
- */
-function initCtaButton() {
-  const ctaBtn = document.querySelector("cta-button");
-  ctaBtn?.addEventListener("click", () => {
-    const projectsSection = document.querySelector("#projects");
-    projectsSection?.scrollIntoView({ behavior: "smooth" });
-  });
-}
+
