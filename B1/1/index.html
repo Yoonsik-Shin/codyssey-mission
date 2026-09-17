@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="웹 컴포넌트 기반 반응형 포트폴리오 웹사이트" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <title>Yoonsik Shin | Portfolio</title>
+  </head>
+  <body>
+    <!-- 1. Semantic Header & Navigation -->
+    <header id="main-header">
+      <nav class="navbar">
+        <div class="nav-logo">
+          <a href="#hero">YS.Portfolio</a>
+        </div>
+
+        <ul class="nav-links" id="nav-links">
+          <li><a href="#hero" class="nav-link active">Home</a></li>
+          <li><a href="#about" class="nav-link">About</a></li>
+          <li><a href="#skills" class="nav-link">Skills</a></li>
+          <li><a href="#projects" class="nav-link">Projects</a></li>
+          <li><a href="#contact" class="nav-link">Contact</a></li>
+        </ul>
+
+        <div class="nav-actions">
+          <!-- 다크모드 토글 버튼 -->
+          <button id="theme-toggle" class="theme-toggle-btn" aria-label="다크 모드 전환">
+            <span class="theme-icon">🌙</span>
+          </button>
+
+          <!-- 햄버거 메뉴 버튼 (모바일) -->
+          <button id="hamburger-btn" class="hamburger-btn" aria-label="메뉴 열기/닫기">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <!-- 2. Semantic Main Content with Web Components -->
+    <main>
+      <section id="hero" class="reveal active">
+        <hero-section>
+          <greetings-text></greetings-text>
+          <cta-button>내 프로젝트 보러가기</cta-button>
+        </hero-section>
+      </section>
+
+      <section id="about" class="reveal">
+        <about-section></about-section>
+      </section>
+
+      <section id="skills" class="reveal">
+        <skills-section></skills-section>
+      </section>
+
+      <section id="projects" class="reveal">
+        <project-section></project-section>
+      </section>
+
+      <section id="contact" class="reveal">
+        <contact-section></contact-section>
+      </section>
+    </main>
+
+    <!-- 3. Semantic Footer -->
+    <footer>
+      <div class="footer-content">
+        <p>© 2026 Yoonsik-Shin. All rights reserved.</p>
+        <p>Built with Vanilla JavaScript & Web Components</p>
+      </div>
+    </footer>
+
+    <!-- 4. Scroll To Top Floating Button -->
+    <button id="scroll-top-btn" aria-label="페이지 맨 위로 이동">↑</button>
+
+    <!-- 5. Main Script (ES Modules) -->
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>
