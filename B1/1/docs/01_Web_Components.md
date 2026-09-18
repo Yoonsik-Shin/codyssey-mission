@@ -190,11 +190,11 @@ export class BaseComponent extends HTMLElement {
 sequenceDiagram
     autonumber
     actor User as 사용자
-    participant Browser as 브라우저 엔진 (HTML/CSS 파서)
-    participant Module as main.js (진입점)
-    participant Comp as ProjectsSection (컴포넌트 인스턴스)
-    participant Net as GitHub API (백그라운드 통신)
-    participant Shadow as Shadow DOM (격리 렌더 트리)
+    participant Browser as 브라우저 엔진
+    participant Module as main.js
+    participant Comp as ProjectsSection
+    participant Net as GitHub API
+    participant Shadow as Shadow DOM
 
     Note over User,Browser: [단계 1: 브라우저 초기 로딩]
     User->>Browser: index.html 요청 및 파싱 시작
