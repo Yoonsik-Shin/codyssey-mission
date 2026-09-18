@@ -88,19 +88,32 @@ function initScrollEffects() {
   const header = document.querySelector("#main-header");
   const scrollTopBtn = document.querySelector("#scroll-top-btn");
 
-  window.addEventListener("scroll", () => {
-    const scrollY = window.scrollY;
+  let ticking = false;
 
-    // 헤더 배경 블러/색상 전환 (60px 이상)
-    if (header) {
-      header.classList.toggle("scrolled", scrollY > 60);
-    }
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
 
-    // 스크롤 탑 버튼 가시성 (300px 이상)
-    if (scrollTopBtn) {
-      scrollTopBtn.classList.toggle("visible", scrollY > 300);
-    }
-  });
+          // 헤더 배경 블러/색상 전환 (60px 이상)
+          if (header) {
+            header.classList.toggle("scrolled", scrollY > 60);
+          }
+
+          // 스크롤 탑 버튼 가시성 (300px 이상)
+          if (scrollTopBtn) {
+            scrollTopBtn.classList.toggle("visible", scrollY > 300);
+          }
+
+          ticking = false;
+        });
+        ticking = true;
+      }
+    },
+    { passive: true },
+  );
 
   // 스크롤 탑 버튼 클릭 시 부드럽게 상단 이동
   scrollTopBtn?.addEventListener("click", () => {
