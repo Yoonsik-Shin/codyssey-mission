@@ -3,7 +3,7 @@ import { BaseComponent } from "./BaseComponent.js";
 /**
  * [Main Controller Component] ProjectsSection
  * - 비동기 API 통신, 5분 세션 캐싱, 지수 백오프 및 컴포넌트 상태 관리 총괄
- * - 파일 최상단에 메인 클래스를 배치하고, 하위 뷰는 static 내부 클래스로 캡슐화
+ * - 메인 컴포넌트가 최상단에 위치하며, 하단에 선언된 뷰 헬퍼 클래스를 활용
  */
 export class ProjectsSection extends BaseComponent {
   get cssPath() {
@@ -11,162 +11,6 @@ export class ProjectsSection extends BaseComponent {
   }
 
   static #CACHE_EXPIRE = 1000 * 60 * 5; // 5분 캐시
-
-  /**
-   * [Nested Static View 1] 로딩 상태 뷰
-   */
-  static LoadingView = class {
-    static render() {
-      return `
-        <section class="projects-container">
-          <div class="projects-header">
-            <div>
-              <h2 class="section-title">Projects</h2>
-              <p class="section-desc">GitHub 저장소에서 최신 프로젝트 목록을 불러오는 중입니다...</p>
-            </div>
-          </div>
-          <div class="projects-grid">
-            ${Array.from({ length: 6 })
-              .map(
-                () => `
-              <div class="project-card" style="pointer-events: none;">
-                <div class="base-skeleton-bar title" style="margin-bottom: 16px; width: 60%;"></div>
-                <div class="base-skeleton-bar text" style="margin-bottom: 8px;"></div>
-                <div class="base-skeleton-bar text short" style="margin-bottom: 24px;"></div>
-                <div style="display: flex; justify-content: space-between; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-color, #f1f5f9);">
-                  <div class="base-skeleton-bar" style="width: 50px; height: 20px; border-radius: 9999px;"></div>
-                  <div class="base-skeleton-bar" style="width: 70px; height: 16px;"></div>
-                </div>
-              </div>
-            `,
-              )
-              .join("")}
-          </div>
-        </section>
-      `;
-    }
-  };
-
-  /**
-   * [Nested Static View 2] 에러 상태 뷰
-   */
-  static ErrorView = class {
-    static render(error) {
-      return `
-        <section class="projects-container">
-          <h2 class="section-title">Projects</h2>
-          <div class="projects-error-box">
-            <span class="error-icon">⚠️</span>
-            <p class="error-message">프로젝트를 불러올 수 없습니다.</p>
-            <small class="error-detail">${error?.message || error}</small>
-            <button id="retry-btn" class="retry-btn">다시 시도</button>
-          </div>
-        </section>
-      `;
-    }
-
-    static bindEvents(shadowRoot, onRetry) {
-      const retryBtn = shadowRoot.querySelector("#retry-btn");
-      retryBtn?.addEventListener("click", onRetry);
-    }
-  };
-
-  /**
-   * [Nested Static View 3] 프로젝트 그리드 & 필터 뷰
-   */
-  static GridView = class {
-    static render(repos, languages, selectedLanguage) {
-      const filteredRepos =
-        selectedLanguage === "All"
-          ? repos
-          : repos.filter((repo) => repo.language === selectedLanguage);
-
-      return `
-        <section class="projects-container">
-          <div class="projects-header">
-            <div>
-              <h2 class="section-title">Projects</h2>
-              <p class="section-desc">GitHub 저장소에서 실시간으로 연동된 최신 프로젝트 목록입니다.</p>
-            </div>
-
-            <!-- 언어 필터 버튼 목록 (요구사항 24) -->
-            ${
-              languages.length > 1
-                ? `
-              <div class="filter-group">
-                ${languages
-                  .map(
-                    (lang) => `
-                  <button 
-                    class="filter-btn ${lang === selectedLanguage ? "active" : ""}" 
-                    data-lang="${lang}"
-                  >
-                    ${lang}
-                  </button>
-                `,
-                  )
-                  .join("")}
-              </div>
-            `
-                : ""
-            }
-          </div>
-
-          ${
-            filteredRepos.length === 0
-              ? `
-            <div class="empty-box">
-              <span class="empty-icon">📂</span>
-              <p class="empty-message">표시할 프로젝트가 없습니다.</p>
-            </div>
-          `
-              : `
-            <div class="projects-grid">
-              ${filteredRepos
-                .map(
-                  ({
-                    name,
-                    html_url,
-                    description,
-                    language,
-                    stargazers_count,
-                  }) => `
-                <a href="${html_url}" target="_blank" rel="noopener noreferrer" class="project-card">
-                  <div class="card-header">
-                    <h3 class="repo-name">${name}</h3>
-                    <span class="stars" title="Stars">⭐ ${stargazers_count}</span>
-                  </div>
-                  <p class="repo-desc">${description || "등록된 프로젝트 설명이 없습니다."}</p>
-                  <div class="repo-footer">
-                    ${language ? `<span class="language-badge">${language}</span>` : "<span></span>"}
-                    <span class="view-link">View Repo ↗</span>
-                  </div>
-                </a>
-              `,
-                )
-                .join("")}
-            </div>
-          `
-          }
-        </section>
-      `;
-    }
-
-    static bindEvents(shadowRoot, onSelectLanguage) {
-      const filterGroup = shadowRoot.querySelector(".filter-group");
-      if (filterGroup) {
-        filterGroup.addEventListener("click", (e) => {
-          const btn = e.target.closest(".filter-btn");
-          if (btn) {
-            const lang = btn.getAttribute("data-lang");
-            if (lang) {
-              onSelectLanguage(lang);
-            }
-          }
-        });
-      }
-    }
-  };
 
   constructor() {
     super();
@@ -258,7 +102,7 @@ export class ProjectsSection extends BaseComponent {
 
   setEvents() {
     if (this.state.error) {
-      ProjectsSection.ErrorView.bindEvents(this.shadowRoot, async () => {
+      ProjectsErrorView.bindEvents(this.shadowRoot, async () => {
         sessionStorage.clear();
         this.setState({ isLoading: true, error: null });
         try {
@@ -271,7 +115,7 @@ export class ProjectsSection extends BaseComponent {
       return;
     }
 
-    ProjectsSection.GridView.bindEvents(this.shadowRoot, (lang) => {
+    ProjectsGridView.bindEvents(this.shadowRoot, (lang) => {
       if (lang !== this.state.selectedLanguage) {
         this.setState({ selectedLanguage: lang });
       }
@@ -279,17 +123,179 @@ export class ProjectsSection extends BaseComponent {
   }
 
   renderLoading() {
-    return ProjectsSection.LoadingView.render();
+    return ProjectsLoadingView.render();
   }
 
   renderError(error) {
-    return ProjectsSection.ErrorView.render(error);
+    return ProjectsErrorView.render(error);
   }
 
   render() {
     const { repos, languages, selectedLanguage } = this.state;
-    return ProjectsSection.GridView.render(repos, languages, selectedLanguage);
+    return ProjectsGridView.render(repos, languages, selectedLanguage);
   }
 }
 
 customElements.define("project-section", ProjectsSection);
+
+
+// =============================================================================
+// File Bottom View Helpers (파일 하단 보조 뷰 클래스)
+// - 런타임에 호출되므로 파일 하단에 배치해도 호이스팅 문제 없이 정상 동작
+// =============================================================================
+
+/**
+ * [View Helper 1] 로딩 상태 뷰
+ */
+class ProjectsLoadingView {
+  static render() {
+    return `
+      <section class="projects-container">
+        <div class="projects-header">
+          <div>
+            <h2 class="section-title">Projects</h2>
+            <p class="section-desc">GitHub 저장소에서 최신 프로젝트 목록을 불러오는 중입니다...</p>
+          </div>
+        </div>
+        <div class="projects-grid">
+          ${Array.from({ length: 6 })
+            .map(
+              () => `
+            <div class="project-card" style="pointer-events: none;">
+              <div class="base-skeleton-bar title" style="margin-bottom: 16px; width: 60%;"></div>
+              <div class="base-skeleton-bar text" style="margin-bottom: 8px;"></div>
+              <div class="base-skeleton-bar text short" style="margin-bottom: 24px;"></div>
+              <div style="display: flex; justify-content: space-between; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-color, #f1f5f9);">
+                <div class="base-skeleton-bar" style="width: 50px; height: 20px; border-radius: 9999px;"></div>
+                <div class="base-skeleton-bar" style="width: 70px; height: 16px;"></div>
+              </div>
+            </div>
+          `,
+            )
+            .join("")}
+        </div>
+      </section>
+    `;
+  }
+}
+
+/**
+ * [View Helper 2] 에러 상태 뷰
+ */
+class ProjectsErrorView {
+  static render(error) {
+    return `
+      <section class="projects-container">
+        <h2 class="section-title">Projects</h2>
+        <div class="projects-error-box">
+          <span class="error-icon">⚠️</span>
+          <p class="error-message">프로젝트를 불러올 수 없습니다.</p>
+          <small class="error-detail">${error?.message || error}</small>
+          <button id="retry-btn" class="retry-btn">다시 시도</button>
+        </div>
+      </section>
+    `;
+  }
+
+  static bindEvents(shadowRoot, onRetry) {
+    const retryBtn = shadowRoot.querySelector("#retry-btn");
+    retryBtn?.addEventListener("click", onRetry);
+  }
+}
+
+/**
+ * [View Helper 3] 프로젝트 그리드 & 필터 뷰
+ */
+class ProjectsGridView {
+  static render(repos, languages, selectedLanguage) {
+    const filteredRepos =
+      selectedLanguage === "All"
+        ? repos
+        : repos.filter((repo) => repo.language === selectedLanguage);
+
+    return `
+      <section class="projects-container">
+        <div class="projects-header">
+          <div>
+            <h2 class="section-title">Projects</h2>
+            <p class="section-desc">GitHub 저장소에서 실시간으로 연동된 최신 프로젝트 목록입니다.</p>
+          </div>
+
+          <!-- 언어 필터 버튼 목록 (요구사항 24) -->
+          ${
+            languages.length > 1
+              ? `
+            <div class="filter-group">
+              ${languages
+                .map(
+                  (lang) => `
+                <button 
+                  class="filter-btn ${lang === selectedLanguage ? "active" : ""}" 
+                  data-lang="${lang}"
+                >
+                  ${lang}
+                </button>
+              `,
+                )
+                .join("")}
+            </div>
+          `
+              : ""
+          }
+        </div>
+
+        ${
+          filteredRepos.length === 0
+            ? `
+          <div class="empty-box">
+            <span class="empty-icon">📂</span>
+            <p class="empty-message">표시할 프로젝트가 없습니다.</p>
+          </div>
+        `
+            : `
+          <div class="projects-grid">
+            ${filteredRepos
+              .map(
+                ({
+                  name,
+                  html_url,
+                  description,
+                  language,
+                  stargazers_count,
+                }) => `
+              <a href="${html_url}" target="_blank" rel="noopener noreferrer" class="project-card">
+                <div class="card-header">
+                  <h3 class="repo-name">${name}</h3>
+                  <span class="stars" title="Stars">⭐ ${stargazers_count}</span>
+                </div>
+                <p class="repo-desc">${description || "등록된 프로젝트 설명이 없습니다."}</p>
+                <div class="repo-footer">
+                  ${language ? `<span class="language-badge">${language}</span>` : "<span></span>"}
+                  <span class="view-link">View Repo ↗</span>
+                </div>
+              </a>
+            `,
+              )
+              .join("")}
+          </div>
+        `
+        }
+      </section>
+    `;
+  }
+
+  static bindEvents(shadowRoot, onSelectLanguage) {
+    const filterGroup = shadowRoot.querySelector(".filter-group");
+    if (filterGroup) {
+      filterGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest(".filter-btn");
+        if (btn) {
+          const lang = btn.getAttribute("data-lang");
+          if (lang) {
+            onSelectLanguage(lang);
+          }
+        }
+      });
+    }
+  }
+}
