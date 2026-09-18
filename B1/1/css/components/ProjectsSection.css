@@ -63,7 +63,15 @@
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
-/* Grid layout with auto-fit and minmax */
+.filter-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* 💡 CSS Grid 채택 이유: 
+   - 2차원(행과 열) 레이아웃을 동시에 제어하여 카드가 바둑판 격자로 완벽히 정렬됨
+   - repeat(auto-fit, minmax(300px, 1fr))를 활용하여 미디어 쿼리 분기 없이도 
+     화면 너비에 맞춰 1열(모바일) → 2열(태블릿) → 3열(데스크톱)로 카드 크기와 열 개수를 자동 계산 */
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -83,6 +91,11 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   box-sizing: border-box;
   min-height: 180px;
+}
+
+.project-card:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
 }
 
 .project-card:hover {

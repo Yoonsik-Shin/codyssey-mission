@@ -4,16 +4,7 @@
 
 /* 1. CSS Variables (:root Light Mode) */
 :root {
-  /* Colors */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-header: rgba(255, 255, 255, 0.85);
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
-  
-  /* Brand / Accent */
+  /* [Category: Brand & Accent Colors] */
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
   --primary-light: #eff6ff;
@@ -21,12 +12,21 @@
   --danger-color: #ef4444;
   --success-color: #10b981;
 
-  /* Card & Shadow */
+  /* [Category: Light Mode Neutrals & Backgrounds] */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-header: rgba(255, 255, 255, 0.85);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+
+  /* [Category: Card & Elevation] */
   --card-bg: #ffffff;
   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   --card-shadow-hover: 0 12px 24px -4px rgba(37, 99, 235, 0.12);
 
-  /* Async UI State Colors (Light) */
+  /* [Category: Async UI State Colors (Light)] */
   --skeleton-base: #f1f5f9;
   --skeleton-shine: #e2e8f0;
   --error-bg: #fef2f2;
@@ -36,17 +36,18 @@
   --danger-bg: #fff5f5;
   --danger-border: #fca5a5;
 
-  /* Layout & Spacing */
+  /* [Category: Layout & Spacing] */
   --header-height: 70px;
   --max-width: 1080px;
   --transition-speed: 0.3s;
   
-  /* Typography */
+  /* [Category: Typography] */
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* 2. Dark Mode CSS Variables */
 [data-theme="dark"] {
+  /* [Category: Dark Mode Neutrals & Backgrounds] */
   --bg-primary: #0b0f19;
   --bg-secondary: #111827;
   --bg-header: rgba(11, 15, 25, 0.85);
@@ -55,15 +56,17 @@
   --text-muted: #94a3b8;
   --border-color: #1f293d;
 
+  /* [Category: Dark Mode Brand Accents] */
   --primary-color: #3b82f6;
   --primary-hover: #60a5fa;
   --primary-light: rgba(59, 130, 246, 0.15);
 
+  /* [Category: Dark Mode Card & Elevation] */
   --card-bg: #111827;
   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   --card-shadow-hover: 0 12px 24px -4px rgba(59, 130, 246, 0.2);
 
-  /* Async UI State Colors (Dark: 눈부심 방지 톤 다운) */
+  /* [Category: Dark Mode Async UI State Colors] */
   --skeleton-base: rgba(255, 255, 255, 0.05);
   --skeleton-shine: rgba(255, 255, 255, 0.12);
   --error-bg: rgba(239, 68, 68, 0.12);
@@ -74,11 +77,18 @@
   --danger-border: rgba(239, 68, 68, 0.4);
 }
 
-/* 3. Base Reset */
+/* 3. Base Reset & Accessibility */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* 키보드 탐색 접근성 (:focus-visible) - Tab 키 사용자 전용 선명한 포커스 링 */
+:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 html {
@@ -95,7 +105,7 @@ body {
   overflow-x: hidden;
 }
 
-/* 4. Semantic Header & Navigation (Flexbox) */
+/* 4. Semantic Header & Navigation (Flexbox: 1차원 수평 축 정렬 및 콘텐츠 유동 간격 제어) */
 header {
   position: fixed;
   top: 0;
@@ -115,6 +125,7 @@ header.scrolled {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
+/* 💡 Flexbox 채택 이유: 로고(좌측), 메뉴(중앙), 버튼(우측) 1차원 수평 공간의 균등 분배(space-between) */
 .navbar {
   display: flex;
   align-items: center;
