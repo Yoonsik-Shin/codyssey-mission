@@ -27,7 +27,9 @@ function initTheme() {
   const THEME_STORAGE_KEY = "portfolio_theme";
 
   // 시스템 다크모드 선호 여부
-  const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const systemPrefersDark = window.matchMedia(
+    "(prefers-color-scheme: dark)",
+  ).matches;
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
   const initialTheme = savedTheme || (systemPrefersDark ? "dark" : "light");
 
@@ -49,11 +51,13 @@ function initTheme() {
   });
 
   // 시스템 설정 실시간 변경 감지
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-    if (!localStorage.getItem(THEME_STORAGE_KEY)) {
-      applyTheme(e.matches ? "dark" : "light");
-    }
-  });
+  window
+    .matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", (e) => {
+      if (!localStorage.getItem(THEME_STORAGE_KEY)) {
+        applyTheme(e.matches ? "dark" : "light");
+      }
+    });
 }
 
 /**
@@ -161,5 +165,3 @@ function initIntersectionObserver() {
 
   sections.forEach((section) => observer.observe(section));
 }
-
-

@@ -67,13 +67,32 @@ window.addEventListener(
 2. **2순위 (시스템 환경)**: OS 설정(`window.matchMedia("(prefers-color-scheme: dark)").matches`)
 3. **3순위 (기본값)**: `light`
 
+### 1) `window.matchMedia()`란?
+
+- **개념**: CSS 미디어 쿼리(Media Query)를 자바스크립트에서 직접 평가하고 실시간 상태 변화를 구독(구독/발행)할 수 있는 브라우저 표준 Web API입니다.
+- **`prefers-color-scheme: dark`**: 사용자의 운영체제(macOS, Windows, iOS 등) 시스템 설정이 다크 모드로 켜져 있는지를 감지하는 미디어 쿼리입니다.
+- **반환 객체 (`MediaQueryList`)**:
+  - `mediaQuery.matches`: 현재 시점에 미디어 쿼리가 일치하는지 여부 (`true` / `false`)
+  - `mediaQuery.addEventListener("change", callback)`: OS 설정이 라이트 ↔ 다크로 실시간 변경될 때 즉각 이벤트 트리거
+
+### 2) 구현 코드 및 동작 흐름
+
 ```javascript
-// 시스템 설정 실시간 감지 리스너
+const THEME_STORAGE_KEY = "portfolio_theme";
+
+// 1. 초기 로드 시: 사용자가 이전에 저장한 테마가 없으면 OS 설정을 읽음
+const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+const initialTheme = savedTheme || (systemPrefersDark ? "dark" : "light");
+
+applyTheme(initialTheme);
+
+// 2. 실시간 감지: 웹페이지를 켜둔 상태에서 OS 테마가 바뀔 때 반응
 window
   .matchMedia("(prefers-color-scheme: dark)")
   .addEventListener("change", (e) => {
-    // 사용자가 수동으로 버튼을 누른 적이 없을 때만 OS 설정에 맞춰 자동 변경
-    if (!localStorage.getItem("portfolio_theme")) {
+    // 💡 중요: 사용자가 웹사이트에서 직접 버튼을 눌러 고른 적이 없을 때만 OS를 따라감
+    if (!localStorage.getItem(THEME_STORAGE_KEY)) {
       applyTheme(e.matches ? "dark" : "light");
     }
   });
