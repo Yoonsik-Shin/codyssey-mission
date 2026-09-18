@@ -24,6 +24,21 @@ export class ContactSection extends BaseComponent {
   }
 
   setEvents() {
+    // 1. 다시 작성하기 버튼 이벤트 (성공 화면일 때)
+    const resetBtn = this.shadowRoot.querySelector("#reset-form-btn");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        this.setState({
+          formData: { name: "", email: "", message: "" },
+          errors: { name: "", email: "", message: "" },
+          isSubmitting: false,
+          isSubmitted: false,
+        });
+      });
+      return; // 성공 화면일 때는 아래 폼 리스너 등록 생략
+    }
+
+    // 2. 폼 입력 및 제출 이벤트 (입력 화면일 때)
     const form = this.shadowRoot.querySelector("#contact-form");
     if (!form) return;
 
@@ -55,19 +70,6 @@ export class ContactSection extends BaseComponent {
 
     // 폼 제출 이벤트
     form.addEventListener("submit", (e) => this.#handleSubmit(e));
-
-    // 다시 작성하기 버튼 (제출 성공 후)
-    const resetBtn = this.shadowRoot.querySelector("#reset-form-btn");
-    if (resetBtn) {
-      resetBtn.addEventListener("click", () => {
-        this.setState({
-          formData: { name: "", email: "", message: "" },
-          errors: { name: "", email: "", message: "" },
-          isSubmitting: false,
-          isSubmitted: false,
-        });
-      });
-    }
   }
 
   // 특정 필드 에러 초기화
