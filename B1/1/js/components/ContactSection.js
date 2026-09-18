@@ -6,12 +6,11 @@ import { BaseComponent } from "./BaseComponent.js";
  * - 메인 컴포넌트가 최상단에 위치하며, 하단에 선언된 뷰 헬퍼 클래스를 활용
  */
 export class ContactSection extends BaseComponent {
+  static #DEFAULT_ENDPOINT = "https://formspree.io/f/myezyrkk";
+
   get cssPath() {
     return BaseComponent.resolveCss("ContactSection.css");
   }
-
-  // 🔒 Formspree 기본 엔드포인트
-  static #DEFAULT_ENDPOINT = "https://formspree.io/f/myezyrkk";
 
   constructor() {
     super();
@@ -33,9 +32,7 @@ export class ContactSection extends BaseComponent {
 
   setEvents() {
     if (this.state.isSubmitted) {
-      ContactSuccessView.bindEvents(this.shadowRoot, () =>
-        this.#handleReset(),
-      );
+      ContactSuccessView.bindEvents(this.shadowRoot, () => this.#handleReset());
     } else {
       ContactFormView.bindEvents(this.shadowRoot, {
         onInput: (field, value) => this.#handleInput(field, value),
@@ -132,7 +129,8 @@ export class ContactSection extends BaseComponent {
       this.setState({
         isSubmitting: false,
         errors: {
-          message: "메시지 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+          message:
+            "메시지 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
         },
       });
     }
@@ -159,7 +157,6 @@ export class ContactSection extends BaseComponent {
 }
 
 customElements.define("contact-section", ContactSection);
-
 
 // =============================================================================
 // File Bottom View Helpers (파일 하단 보조 뷰 클래스)
