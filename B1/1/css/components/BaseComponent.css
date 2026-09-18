@@ -4,23 +4,31 @@
 .base-skeleton-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+  gap: 16px;
+  padding: 24px;
   width: 100%;
   box-sizing: border-box;
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
 }
 
 .base-skeleton-bar {
   height: 16px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(
+    90deg, 
+    var(--skeleton-base, rgba(0, 0, 0, 0.06)) 25%, 
+    var(--skeleton-shine, rgba(0, 0, 0, 0.12)) 50%, 
+    var(--skeleton-base, rgba(0, 0, 0, 0.06)) 75%
+  );
   background-size: 200% 100%;
-  animation: base-shimmer 1.5s infinite linear;
+  animation: base-shimmer 1.6s infinite linear;
 }
 
 .base-skeleton-bar.title {
-  height: 24px;
-  width: 45%;
+  height: 26px;
+  width: 40%;
 }
 
 .base-skeleton-bar.text {
@@ -28,7 +36,7 @@
 }
 
 .base-skeleton-bar.short {
-  width: 70%;
+  width: 65%;
 }
 
 @keyframes base-shimmer {
@@ -45,16 +53,16 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   font-size: 14px;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .base-spinner {
   width: 18px;
   height: 18px;
-  border: 2.5px solid #e2e8f0;
-  border-top-color: #2563eb;
+  border: 2.5px solid var(--border-color, #e2e8f0);
+  border-top-color: var(--primary-color, #2563eb);
   border-radius: 50%;
   animation: base-spin 0.8s linear infinite;
 }
@@ -67,21 +75,25 @@
 
 /* 3. 에러 박스 UI (Error Boundary) */
 .base-error-box {
-  padding: 16px;
-  border-radius: 8px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: var(--error-bg, #fef2f2);
+  border: 1px solid var(--error-border, #fecaca);
+  color: var(--error-text, #991b1b);
   font-size: 14px;
   line-height: 1.5;
 }
 
 .base-error-title {
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .base-error-detail {
-  font-size: 12px;
-  color: #b91c1c;
+  font-size: 13px;
+  color: var(--error-detail, #b91c1c);
+  opacity: 0.9;
 }

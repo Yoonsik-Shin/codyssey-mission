@@ -26,6 +26,14 @@
   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   --card-shadow-hover: 0 12px 24px -4px rgba(37, 99, 235, 0.12);
 
+  /* Async UI State Colors (Light) */
+  --skeleton-base: #f1f5f9;
+  --skeleton-shine: #e2e8f0;
+  --error-bg: #fef2f2;
+  --error-border: #fecaca;
+  --error-text: #991b1b;
+  --error-detail: #b91c1c;
+
   /* Layout & Spacing */
   --header-height: 70px;
   --max-width: 1080px;
@@ -52,6 +60,14 @@
   --card-bg: #111827;
   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   --card-shadow-hover: 0 12px 24px -4px rgba(59, 130, 246, 0.2);
+
+  /* Async UI State Colors (Dark: 눈부심 방지 톤 다운) */
+  --skeleton-base: rgba(255, 255, 255, 0.05);
+  --skeleton-shine: rgba(255, 255, 255, 0.12);
+  --error-bg: rgba(239, 68, 68, 0.12);
+  --error-border: rgba(239, 68, 68, 0.3);
+  --error-text: #fca5a5;
+  --error-detail: #f87171;
 }
 
 /* 3. Base Reset */

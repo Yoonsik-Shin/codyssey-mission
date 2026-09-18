@@ -113,6 +113,36 @@ export class ProjectsSection extends BaseComponent {
     }
   }
 
+  renderLoading() {
+    return `
+      <section class="projects-container">
+        <div class="projects-header">
+          <div>
+            <h2 class="section-title">Projects</h2>
+            <p class="section-desc">GitHub 저장소에서 최신 프로젝트 목록을 불러오는 중입니다...</p>
+          </div>
+        </div>
+        <div class="projects-grid">
+          ${Array.from({ length: 6 })
+            .map(
+              () => `
+            <div class="project-card" style="pointer-events: none;">
+              <div class="base-skeleton-bar title" style="margin-bottom: 16px; width: 60%;"></div>
+              <div class="base-skeleton-bar text" style="margin-bottom: 8px;"></div>
+              <div class="base-skeleton-bar text short" style="margin-bottom: 24px;"></div>
+              <div style="display: flex; justify-content: space-between; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-color, #f1f5f9);">
+                <div class="base-skeleton-bar" style="width: 50px; height: 20px; border-radius: 9999px;"></div>
+                <div class="base-skeleton-bar" style="width: 70px; height: 16px;"></div>
+              </div>
+            </div>
+          `,
+            )
+            .join("")}
+        </div>
+      </section>
+    `;
+  }
+
   renderError(error) {
     return `
       <section class="projects-container">

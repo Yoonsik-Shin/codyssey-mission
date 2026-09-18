@@ -173,11 +173,13 @@
 .empty-icon {
   font-size: 40px;
   margin-bottom: 12px;
+  opacity: 0.8;
 }
 
 .empty-message {
-  color: var(--text-muted, #64748b);
+  color: var(--text-secondary, #64748b);
   font-size: 1rem;
+  font-weight: 500;
 }
 
 /* Error State with Retry Button */
@@ -187,48 +189,47 @@
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  background-color: var(--error-bg, #fef2f2);
+  border: 1px solid var(--error-border, #fecaca);
   border-radius: 12px;
   text-align: center;
-  gap: 10px;
-}
-
-[data-theme="dark"] .projects-error-box {
-  background-color: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
+  gap: 12px;
 }
 
 .error-icon {
-  font-size: 32px;
+  font-size: 36px;
 }
 
 .error-message {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #b91c1c;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--error-text, #b91c1c);
 }
 
 .error-detail {
-  font-size: 0.85rem;
-  color: #dc2626;
+  font-size: 0.88rem;
+  color: var(--error-detail, #dc2626);
+  max-width: 480px;
+  line-height: 1.5;
 }
 
 .retry-btn {
-  margin-top: 8px;
-  padding: 8px 20px;
-  font-size: 0.9rem;
+  margin-top: 6px;
+  padding: 10px 24px;
+  font-size: 0.92rem;
   font-weight: 600;
   color: #ffffff;
-  background-color: #dc2626;
+  background-color: var(--primary-color, #2563eb);
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  transition: transform 0.2s, background-color 0.2s;
 }
 
 .retry-btn:hover {
-  background-color: #b91c1c;
+  background-color: var(--primary-hover, #1d4ed8);
+  transform: translateY(-1px);
 }
 
 @media (min-width: 768px) {
