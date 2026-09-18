@@ -83,7 +83,7 @@
 
 | 번호 | 요구사항 | 구현 내용 및 세부 사항 | 상태 | 관련 파일 |
 | :--- | :--- | :--- | :---: | :--- |
-| **12** | **ES 모듈 & DOM 조작** | - `script type="module"` (모듈 지연 로딩 특성 포함) 적용<br>- `var` 키워드 완전 배제 (`const`, `let`만 사용)<br>- 인라인 이벤트 리스너(`onclick`) 대신 `addEventListener` 사용<br>- `querySelector`, `querySelectorAll` 표준 DOM 선택자 사용<br>- `classList.add`, `remove`, `toggle`로 안전한 클래스 제어<br>- `click`, `submit`, `scroll`, `input` 등 주요 이벤트 리스너 활용 | ✅ | [`main.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/main.js)<br>모든 JS 컴포넌트 |
+| **12** | **스크립트 로딩 & DOM 조작** | - `script type="module" defer` 적용 (HTML 파싱 차단 방지 및 DOM 완성 후 안전한 실행 보장)<br>- `var` 키워드 완전 배제 (`const`, `let`만 사용)<br>- 인라인 이벤트 리스너(`onclick`) 대신 `addEventListener` 사용<br>- `querySelector`, `querySelectorAll` 표준 DOM 선택자 사용<br>- `classList.add`, `remove`, `toggle`로 안전한 클래스 제어<br>- `click`, `submit`, `scroll`, `input` 등 주요 이벤트 리스너 활용 | ✅ | [`index.html`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/index.html)<br>[`main.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/main.js)<br>모든 JS 컴포넌트 |
 | **21** | **화살표 함수 (Arrow Function)** | - 콜백 및 메서드 내부 익명 함수에 화살표 함수 구문 적용 | ✅ | 전체 JS 코드 |
 | **22** | **템플릿 리터럴 (Template Literals)** | - 백틱(`` ` ``)을 이용한 동적 HTML 마크업 렌더링 | ✅ | 전체 Web Components |
 | **23** | **구조분해 할당 (Destructuring)** | - 객체 및 배열 구조분해 할당 활용 (`const { name, email, message } = this.state.formData;` 등) | ✅ | [`ContactSection.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/components/ContactSection.js) 등 |
