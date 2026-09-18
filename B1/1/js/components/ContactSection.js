@@ -70,7 +70,7 @@ export class ContactSection extends BaseComponent {
     }
   }
 
-  // 🔒 Private 메서드: 특정 필드 에러 초기화
+  // 특정 필드 에러 초기화
   #clearFieldError(fieldName) {
     const errorEl = this.shadowRoot.querySelector(`#error-${fieldName}`);
     const inputEl = this.shadowRoot.querySelector(`#${fieldName}`);
@@ -78,7 +78,7 @@ export class ContactSection extends BaseComponent {
     if (inputEl) inputEl.classList.remove("invalid");
   }
 
-  // 🔒 Private 메서드: 폼 입력값 유효성 검증
+  // 폼 입력값 유효성 검증
   #validateForm() {
     const { name, email, message } = this.state.formData;
     const errors = { name: "", email: "", message: "" };
@@ -115,7 +115,7 @@ export class ContactSection extends BaseComponent {
     return { isValid, errors };
   }
 
-  // 🔒 Private 메서드: 에러 메시지 돔 미세 업데이트 (전체 innerHTML 재파싱 방지)
+  // 에러 메시지 돔 미세 업데이트 (전체 innerHTML 재파싱 방지)
   #applyErrorsToDom(errors) {
     ["name", "email", "message"].forEach((field) => {
       const errorEl = this.shadowRoot.querySelector(`#error-${field}`);
@@ -127,7 +127,7 @@ export class ContactSection extends BaseComponent {
     });
   }
 
-  // 🔒 Private 메서드: 폼 제출 핸들러
+  // 폼 제출 핸들러
   async #handleSubmit(event) {
     event.preventDefault(); // 기본 폼 제출 동작 방지 (요구사항 17)
 
@@ -155,7 +155,9 @@ export class ContactSection extends BaseComponent {
       console.error("[ContactSection] 전송 실패:", err);
       this.setState({
         isSubmitting: false,
-        errors: { message: "메시지 전송 중 문제가 발생했습니다. 다시 시도해주세요." },
+        errors: {
+          message: "메시지 전송 중 문제가 발생했습니다. 다시 시도해주세요.",
+        },
       });
     }
   }
