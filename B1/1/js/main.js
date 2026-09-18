@@ -1,5 +1,6 @@
 /**
- * main.js - 애플리케이션 진입점 및 전역 컨트롤러
+ * main.js - 애플리케이션 진입점 (App Entrypoint)
+ * - 웹 컴포넌트 등록 및 전역 컨트롤러 초기화 조율
  */
 
 // 1. 웹 컴포넌트 등록
@@ -9,162 +10,18 @@ import "./components/SkillsSection.js";
 import "./components/ProjectsSection.js";
 import "./components/ContactSection.js";
 
+// 2. 전역 UI 인터랙션 컨트롤러
+import { initTheme } from "./controllers/theme.js";
+import { initNavigation } from "./controllers/navigation.js";
+import {
+  initScrollEffects,
+  initIntersectionObserver,
+} from "./controllers/scroll.js";
+
+// 3. 애플리케이션 부트스트랩
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initNavigation();
   initScrollEffects();
   initIntersectionObserver();
 });
-
-/**
- * 2. 다크 모드 컨트롤러 (요구사항 3, 10)
- * - 테마 결정 우선순위:
- *   1순위: localStorage에 저장된 사용자 명시적 선택 테마 (다크/라이트)
- *   2순위: 시스템(OS) 설정 (prefers-color-scheme: dark)
- *   3순위: 시스템 기본값 (light)
- */
-function initTheme() {
-  const themeToggleBtn = document.querySelector("#theme-toggle");
-  const themeIcon = themeToggleBtn?.querySelector(".theme-icon");
-  const THEME_STORAGE_KEY = "portfolio_theme";
-
-  // 시스템 다크모드 선호 여부
-  const systemPrefersDark = window.matchMedia(
-    "(prefers-color-scheme: dark)",
-  ).matches;
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-  const initialTheme = savedTheme || (systemPrefersDark ? "dark" : "light");
-
-  const applyTheme = (theme) => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
-    if (themeIcon) {
-      themeIcon.textContent = theme === "dark" ? "☀️" : "🌙";
-    }
-  };
-
-  applyTheme(initialTheme);
-
-  // 토글 버튼 클릭 이벤트
-  themeToggleBtn?.addEventListener("click", () => {
-    const currentTheme = document.documentElement.getAttribute("data-theme");
-    const nextTheme = currentTheme === "dark" ? "light" : "dark";
-    applyTheme(nextTheme);
-  });
-
-  // 시스템 설정 실시간 변경 감지 (사용자가 웹에서 수동 변경한 적 없을 때만 OS 설정 동기화)
-  window
-    .matchMedia("(prefers-color-scheme: dark)")
-    .addEventListener("change", (e) => {
-      if (!localStorage.getItem(THEME_STORAGE_KEY)) {
-        applyTheme(e.matches ? "dark" : "light");
-      }
-    });
-}
-
-/**
- * 3. 네비게이션 & 햄버거 메뉴 컨트롤러 (요구사항 1, 4, 5)
- */
-function initNavigation() {
-  const hamburgerBtn = document.querySelector("#hamburger-btn");
-  const navLinks = document.querySelector("#nav-links");
-  const navItems = document.querySelectorAll(".nav-link");
-
-  // 햄버거 메뉴 토글
-  hamburgerBtn?.addEventListener("click", () => {
-    const isActive = hamburgerBtn.classList.toggle("active");
-    navLinks?.classList.toggle("active", isActive);
-  });
-
-  // 모바일 메뉴 클릭 시 자동 닫힘
-  navItems.forEach((link) => {
-    link.addEventListener("click", () => {
-      hamburgerBtn?.classList.remove("active");
-      navLinks?.classList.remove("active");
-    });
-  });
-}
-
-/**
- * 4. 스크롤 인터랙션 컨트롤러 (요구사항 15, 20)
- * 💡 임계값(Threshold) 설계 기준:
- * - 60px: 기본 헤더 높이(70px) 직전에 글래스모피즘(블러+경계선)으로 자연스럽게 전환
- * - 300px: 사용자가 Hero 섹션을 완전히 벗어나 스크롤했을 때 비로소 상단 이동 버튼 노출
- */
-function initScrollEffects() {
-  const header = document.querySelector("#main-header");
-  const scrollTopBtn = document.querySelector("#scroll-top-btn");
-
-  let ticking = false;
-
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const scrollY = window.scrollY;
-
-          // 헤더 배경 블러/색상 전환 (60px 이상)
-          if (header) {
-            header.classList.toggle("scrolled", scrollY > 60);
-          }
-
-          // 스크롤 탑 버튼 가시성 (300px 이상)
-          if (scrollTopBtn) {
-            scrollTopBtn.classList.toggle("visible", scrollY > 300);
-          }
-
-          ticking = false;
-        });
-        ticking = true;
-      }
-    },
-    { passive: true },
-  );
-
-  // 스크롤 탑 버튼 클릭 시 부드럽게 상단 이동
-  scrollTopBtn?.addEventListener("click", () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  });
-}
-
-/**
- * 5. Intersection Observer (요구사항 5, 6, 26)
- * - threshold: 0.2 이상 권장
- * - 섹션 스크롤 진입 애니메이션 (.reveal)
- * - 현재 보고 있는 섹션 메뉴 하이라이트
- */
-function initIntersectionObserver() {
-  const sections = document.querySelectorAll(".reveal");
-  const navLinks = document.querySelectorAll(".nav-link");
-
-  const observerOptions = {
-    root: null,
-    threshold: 0.25, // 0.2 이상 권장 만족
-  };
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        // 스크롤 진입 애니메이션 활성화
-        entry.target.classList.add("active");
-
-        // 네비게이션 현재 메뉴 하이라이트
-        const currentId = entry.target.getAttribute("id");
-        navLinks.forEach((link) => {
-          const href = link.getAttribute("href");
-          if (href === `#${currentId}`) {
-            link.classList.add("active");
-          } else {
-            link.classList.remove("active");
-          }
-        });
-      }
-    });
-  }, observerOptions);
-
-  sections.forEach((section) => observer.observe(section));
-}
