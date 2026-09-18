@@ -35,26 +35,26 @@ export class ContactSection extends BaseComponent {
     if (nameInput) {
       nameInput.addEventListener("input", (e) => {
         this.state.formData.name = e.target.value;
-        this.clearFieldError("name");
+        this.#clearFieldError("name");
       });
     }
 
     if (emailInput) {
       emailInput.addEventListener("input", (e) => {
         this.state.formData.email = e.target.value;
-        this.clearFieldError("email");
+        this.#clearFieldError("email");
       });
     }
 
     if (messageInput) {
       messageInput.addEventListener("input", (e) => {
         this.state.formData.message = e.target.value;
-        this.clearFieldError("message");
+        this.#clearFieldError("message");
       });
     }
 
     // 폼 제출 이벤트
-    form.addEventListener("submit", (e) => this.handleSubmit(e));
+    form.addEventListener("submit", (e) => this.#handleSubmit(e));
 
     // 다시 작성하기 버튼 (제출 성공 후)
     const resetBtn = this.shadowRoot.querySelector("#reset-form-btn");
@@ -70,14 +70,16 @@ export class ContactSection extends BaseComponent {
     }
   }
 
-  clearFieldError(fieldName) {
+  // 🔒 Private 메서드: 특정 필드 에러 초기화
+  #clearFieldError(fieldName) {
     const errorEl = this.shadowRoot.querySelector(`#error-${fieldName}`);
     const inputEl = this.shadowRoot.querySelector(`#${fieldName}`);
     if (errorEl) errorEl.textContent = "";
     if (inputEl) inputEl.classList.remove("invalid");
   }
 
-  validateForm() {
+  // 🔒 Private 메서드: 폼 입력값 유효성 검증
+  #validateForm() {
     const { name, email, message } = this.state.formData;
     const errors = { name: "", email: "", message: "" };
     let isValid = true;
@@ -113,10 +115,11 @@ export class ContactSection extends BaseComponent {
     return { isValid, errors };
   }
 
-  async handleSubmit(event) {
+  // 🔒 Private 메서드: 폼 제출 핸들러
+  async #handleSubmit(event) {
     event.preventDefault(); // 기본 폼 제출 동작 방지 (요구사항 17)
 
-    const { isValid, errors } = this.validateForm();
+    const { isValid, errors } = this.#validateForm();
 
     if (!isValid) {
       this.setState({ errors });
@@ -126,7 +129,7 @@ export class ContactSection extends BaseComponent {
     this.setState({ isSubmitting: true, errors: { name: "", email: "", message: "" } });
 
     try {
-      // Formspree 연동 준비 (필요 시 formspree URL로 대체 가능)
+      // Formspree/EmailJS 등 백엔드 전송 대기 모사
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       this.setState({
