@@ -148,6 +148,44 @@ flowchart TD
     D2 --> D3
 ```
 
+---
+
+### 3) ⭐️ 비차단(Non-blocking) 렌더링 타임라인 & FOUC 방지 구조
+
+> **"API 응답이 올 때까지 렌더링이 멈춰있나요?"**  
+> **아닙니다!** 브라우저는 API 응답을 기다리지 않고(Non-blocking), **스켈레톤을 먼저 노출한 뒤 백그라운드 통신이 끝나면 화면을 교체**합니다.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant DOM as 브라우저 DOM
+    participant Comp as ProjectsSection (컴포넌트)
+    participant Shadow as Shadow DOM
+    participant API as GitHub API (백그라운드)
+
+    DOM->>Comp: 1. connectedCallback() 진입 (동기)
+    Comp->>Shadow: 2. 인라인 크리티컬 CSS 주입 & 스켈레톤 즉각 렌더링 (초기 뷰)
+    Comp->>Shadow: 3. 외부 CSS (<link>) 비동기 다운로드 요청
+    Comp->>API: 4. mounted() -> #fetchRepositories() (비동기 호출 시작!)
+    Note over Comp,API: 💡 API 응답을 전혀 기다리지 않고 브라우저 렌더링 지속 (Non-blocking)
+    Shadow-->>DOM: 5. CSS 다운로드 완료 -> styles-ready (부드러운 Fade-in, FOUC 차단)
+    Note over DOM: 사용자는 지루하지 않게 쉬머 애니메이션 스켈레톤 카드를 보고 있음
+    API-->>Comp: 6. (수백 ms 후) GitHub 응답 도착 (JSON 데이터)
+    Comp->>Comp: 7. setState({ repos, isLoading: false })
+    Comp->>Shadow: 8. 실제 프로젝트 카드 템플릿으로 화면 전환 (재렌더링 완료)
+```
+
+#### 🛡️ 3단계 API 에러 핸들링 및 자동 복구 파이프라인
+
+1. **지수 백오프 자동 재시도**: 일시적 네트워크 순단 시 실패 처리하지 않고 `1초 ➔ 2초` 간격으로 최대 2회 자동 재시도.
+2. **원인별 정밀 분기**:
+   - **GitHub API 호출 한도 초과(403)**: 시간당 60회 제한 안내 한국어 메시지 출력.
+   - **빈 배열(`[]`)**: 정상 응답이나 저장소가 없는 경우 📂 `표시할 프로젝트가 없습니다.` 안내 박스 출력.
+   - **서버 오류/네트워크 단절**: 상태 코드 및 구체적 원인 출력.
+3. **에러 바운더리 & [다시 시도] 복구 액션**: `ProjectsErrorView`를 렌더링하여 사용자에게 **[다시 시도]** 버튼을 제공, 클릭 시 캐시를 비우고 스켈레톤부터 재호출.
+
+---
+
 ### 💡 브라우저 콘솔(F12)에서 비동기 상태 직접 검증해보기
 
 실제 배포 사이트에서 개발자 도구(`F12`) 콘솔을 열고 아래 명령어를 입력하여 각 UI 상태를 즉시 확인할 수 있습니다:
