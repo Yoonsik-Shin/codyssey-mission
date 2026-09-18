@@ -34,7 +34,81 @@
 
 ---
 
-## ✨ 4. 주요 기능 및 인터랙션
+## 🔄 4. 화면 렌더링 파이프라인 시각화 (Rendering Lifecycle)
+
+본 프로젝트는 외부 프레임워크(React 등) 없이 **브라우저 네이티브 Web Components와 `BaseComponent` 기반의 단방향 데이터 흐름(Unidirectional Data Flow)**으로 화면을 렌더링합니다.
+
+### 1) 초기 마운트 및 업그레이드(Upgrade) 흐름
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 브라우저 (HTML Parser)
+    participant DOM as Light DOM (index.html)
+    participant Module as main.js (ES Module / defer)
+    participant Comp as BaseComponent (Custom Element)
+    participant Shadow as Shadow DOM (캡슐화 트리)
+
+    User->>DOM: index.html 로드 및 DOM 트리 파싱
+    Note over DOM: <hero-section>, <project-section> 등<br/>미정의 커스텀 태그 대기 (HTMLUnknownElement)
+    DOM->>Module: HTML 파싱 완료 직후 script 실행
+    Module->>Comp: customElements.define() 등록
+    Note over Comp: 커스텀 엘리먼트 업그레이드 (Upgrading)
+    Comp->>Comp: constructor() -> attachShadow({mode: 'open'})
+    Comp->>Comp: connectedCallback() 트리 진입
+    Comp->>Shadow: _renderWithStyle() (CSS 링크 주입 + HTML 템플릿 렌더링)
+    Comp->>Comp: _handleMounted() -> mounted() 호출 (비동기 fetch 등)
+    Comp->>Shadow: setEvents() -> 섀도우 돔 내부 이벤트 리스너 바인딩
+```
+
+---
+
+### 2) 이벤트 발생 시 상태 변경 및 재렌더링 파이프라인 (State-Driven Pipeline)
+
+```mermaid
+flowchart TD
+    subgraph Trigger["1. 사용자 인터랙션 & 비동기 응답"]
+        E1["사용자 이벤트 (click / input / submit)"]
+        E2["비동기 API 응답 (GitHub Fetch 완료)"]
+    end
+
+    subgraph StateUpdate["2. 상태 변경 (BaseComponent)"]
+        S1["setState(newState) 호출"]
+        S2["새로운 상태와 기존 상태 병합<br/>(this.state = {...this.state, ...newState})"]
+    end
+
+    subgraph RenderEngine["3. 상태별 렌더링 분기 (_renderWithStyle)"]
+        C1{"this.state 상태 분기"}
+        R1["renderLoading()<br/>(스켈레톤 쉬머 & 로딩 스피너)"]
+        R2["renderError(err)<br/>(에러 박스 & [다시 시도] 버튼)"]
+        R3["render()<br/>(성공 상태 UI 카드 템플릿 생성)"]
+    end
+
+    subgraph DOMUpdate["4. Shadow DOM 적용 & 이벤트 재바인딩"]
+        D1["this.shadowRoot.innerHTML 갱신"]
+        D2["setEvents() 재호출<br/>(새로운 DOM 노드에 이벤트 리스너 연결)"]
+        D3["화면 반영 (사용자 인터페이스 업데이트 완료)"]
+    end
+
+    E1 --> S1
+    E2 --> S1
+    S1 --> S2
+    S2 --> C1
+
+    C1 -->|"state.isLoading === true"| R1
+    C1 -->|"state.error !== null"| R2
+    C1 -->|"정상 상태"| R3
+
+    R1 --> D1
+    R2 --> D1
+    R3 --> D1
+    D1 --> D2
+    D2 --> D3
+```
+
+---
+
+## ✨ 5. 주요 기능 및 인터랙션
 
 1. **모바일 퍼스트 반응형 레이아웃**:
    - 뷰포트에 따른 유연한 그리드 레이아웃 (모바일 `< 768px`, 태블릿 `768px ~ 1023px`, 데스크톱 `≥ 1024px`)
@@ -63,7 +137,7 @@
 
 ---
 
-## 📚 5. 상세 아키텍처 및 학습 문서
+## 📚 6. 상세 아키텍처 및 학습 문서
 
 프로젝트 구현 상세 원리와 심화 학습 내용은 `docs/` 폴더 내 문서에 정리되어 있습니다:
 
@@ -75,7 +149,7 @@
 
 ---
 
-## 📋 6. 요구사항 검증 요약
+## 📋 7. 요구사항 검증 요약
 
 <details>
 <summary><b>과제 요구사항 전체 체크리스트 펼쳐보기</b></summary>
@@ -112,7 +186,7 @@
 
 ---
 
-## 🎯 7. 설명 가능한 학습 목표
+## 🎯 8. 설명 가능한 학습 목표
 
 - **시맨틱 태그 설계 기준**: 단순한 구역 분할(`div`)을 지양하고, 문서의 의미론적 계층 구조(헤더, 네비게이션, 본문 구역, 독립적인 카드 아티클, 푸터)를 명확히 설계하여 웹 접근성(A11y)과 검색 엔진 최적화(SEO)를 달성한 기준을 설명할 수 있습니다.
 - **Flexbox vs Grid 차이와 선택 기준**: 1차원 흐름 배치(네비게이션 바, 폼 입력 줄바꿈)에는 `Flexbox`를, 2차원 반응형 그리드(`repeat(auto-fit, minmax(...))` 기반의 프로젝트 카드 배치)에는 `Grid`를 적용한 설계 기준을 설명할 수 있습니다.
