@@ -83,12 +83,8 @@
 .form-input.invalid,
 .form-textarea.invalid {
   border-color: var(--danger-color, #ef4444);
-  background-color: #fff5f5;
-}
-
-[data-theme="dark"] .form-input.invalid,
-[data-theme="dark"] .form-textarea.invalid {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: var(--danger-bg, #fff5f5);
+  color: var(--text-primary, #0f172a);
 }
 
 .form-textarea {
