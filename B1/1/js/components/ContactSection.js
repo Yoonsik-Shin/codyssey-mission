@@ -3,7 +3,7 @@ import { BaseComponent } from "./BaseComponent.js";
 /**
  * [Main Controller Component] ContactSection
  * - 폼 상태(state) 관리 및 Formspree API 비동기 통신 총괄
- * - 파일 최상단에 메인 클래스를 배치하고, 하위 뷰는 static 내부 클래스로 캡슐화
+ * - 메인 컴포넌트가 최상단에 위치하며, 하단에 선언된 뷰 헬퍼 클래스를 활용
  */
 export class ContactSection extends BaseComponent {
   get cssPath() {
@@ -12,144 +12,6 @@ export class ContactSection extends BaseComponent {
 
   // 🔒 Formspree 기본 엔드포인트
   static #DEFAULT_ENDPOINT = "https://formspree.io/f/myezyrkk";
-
-  /**
-   * [Nested Static View 1] 성공 피드백 뷰
-   */
-  static SuccessView = class {
-    static render(email) {
-      return `
-        <div class="success-box">
-          <span class="success-icon">🎉</span>
-          <h3 class="success-title">메시지가 성공적으로 전송되었습니다!</h3>
-          <p class="success-desc">확인 후 남겨주신 이메일(${email})로 회신드리겠습니다.</p>
-          <button id="reset-form-btn" class="reset-btn">새로운 메시지 작성하기</button>
-        </div>
-      `;
-    }
-
-    static bindEvents(shadowRoot, onReset) {
-      const resetBtn = shadowRoot.querySelector("#reset-form-btn");
-      resetBtn?.addEventListener("click", onReset);
-    }
-  };
-
-  /**
-   * [Nested Static View 2] 폼 입력 뷰
-   */
-  static FormView = class {
-    static render(formData, errors, isSubmitting) {
-      return `
-        <form id="contact-form" class="contact-form" novalidate>
-          <!-- 이름 입력 필드 -->
-          <div class="form-group">
-            <label for="name" class="form-label">
-              이름 <span class="required">*</span>
-            </label>
-            <input 
-              type="text" 
-              id="name" 
-              name="name" 
-              class="form-input ${errors.name ? "invalid" : ""}" 
-              placeholder="홍길동"
-              value="${formData.name}"
-              aria-invalid="${errors.name ? "true" : "false"}"
-              required 
-            />
-            <span id="error-name" class="error-text" role="alert" aria-live="polite">${errors.name}</span>
-          </div>
-
-          <!-- 이메일 입력 필드 -->
-          <div class="form-group">
-            <label for="email" class="form-label">
-              이메일 주소 <span class="required">*</span>
-            </label>
-            <input 
-              type="email" 
-              id="email" 
-              name="email" 
-              class="form-input ${errors.email ? "invalid" : ""}" 
-              placeholder="example@domain.com"
-              value="${formData.email}"
-              aria-invalid="${errors.email ? "true" : "false"}"
-              required 
-            />
-            <span id="error-email" class="error-text" role="alert" aria-live="polite">${errors.email}</span>
-          </div>
-
-          <!-- 메시지 입력 필드 -->
-          <div class="form-group">
-            <label for="message" class="form-label">
-              문의 내용 <span class="required">*</span>
-            </label>
-            <textarea 
-              id="message" 
-              name="message" 
-              class="form-textarea ${errors.message ? "invalid" : ""}" 
-              rows="5" 
-              placeholder="궁금한 점이나 제안하고 싶으신 내용을 자유롭게 작성해주세요."
-              aria-invalid="${errors.message ? "true" : "false"}"
-              required
-            >${formData.message}</textarea>
-            <span id="error-message" class="error-text" role="alert" aria-live="polite">${errors.message}</span>
-          </div>
-
-          <!-- 제출 버튼 -->
-          <button type="submit" class="submit-btn" ${isSubmitting ? "disabled" : ""}>
-            ${isSubmitting ? "전송 중..." : "메시지 보내기 🚀"}
-          </button>
-        </form>
-      `;
-    }
-
-    static bindEvents(shadowRoot, { onInput, onSubmit }) {
-      const form = shadowRoot.querySelector("#contact-form");
-      if (!form) return;
-
-      ["name", "email", "message"].forEach((field) => {
-        const el = shadowRoot.querySelector(`#${field}`);
-        el?.addEventListener("input", (e) => onInput(field, e.target.value));
-      });
-
-      form.addEventListener("submit", onSubmit);
-    }
-
-    static updateErrors(shadowRoot, errors) {
-      let firstErrorField = null;
-
-      ["name", "email", "message"].forEach((field) => {
-        const errorEl = shadowRoot.querySelector(`#error-${field}`);
-        const inputEl = shadowRoot.querySelector(`#${field}`);
-        const hasError = Boolean(errors[field]);
-
-        if (errorEl) {
-          errorEl.textContent = errors[field] || "";
-        }
-
-        if (inputEl) {
-          inputEl.classList.toggle("invalid", hasError);
-          inputEl.setAttribute("aria-invalid", hasError ? "true" : "false");
-          if (hasError && !firstErrorField) {
-            firstErrorField = inputEl;
-          }
-        }
-      });
-
-      if (firstErrorField) {
-        firstErrorField.focus();
-      }
-    }
-
-    static clearFieldError(shadowRoot, fieldName) {
-      const errorEl = shadowRoot.querySelector(`#error-${fieldName}`);
-      const inputEl = shadowRoot.querySelector(`#${fieldName}`);
-      if (errorEl) errorEl.textContent = "";
-      if (inputEl) {
-        inputEl.classList.remove("invalid");
-        inputEl.setAttribute("aria-invalid", "false");
-      }
-    }
-  };
 
   constructor() {
     super();
@@ -171,11 +33,11 @@ export class ContactSection extends BaseComponent {
 
   setEvents() {
     if (this.state.isSubmitted) {
-      ContactSection.SuccessView.bindEvents(this.shadowRoot, () =>
+      ContactSuccessView.bindEvents(this.shadowRoot, () =>
         this.#handleReset(),
       );
     } else {
-      ContactSection.FormView.bindEvents(this.shadowRoot, {
+      ContactFormView.bindEvents(this.shadowRoot, {
         onInput: (field, value) => this.#handleInput(field, value),
         onSubmit: (e) => this.#handleSubmit(e),
       });
@@ -184,7 +46,7 @@ export class ContactSection extends BaseComponent {
 
   #handleInput(field, value) {
     this.state.formData[field] = value;
-    ContactSection.FormView.clearFieldError(this.shadowRoot, field);
+    ContactFormView.clearFieldError(this.shadowRoot, field);
   }
 
   #handleReset() {
@@ -236,12 +98,12 @@ export class ContactSection extends BaseComponent {
 
     if (!isValid) {
       this.state.errors = errors;
-      ContactSection.FormView.updateErrors(this.shadowRoot, errors);
+      ContactFormView.updateErrors(this.shadowRoot, errors);
       return;
     }
 
     this.state.errors = { name: "", email: "", message: "" };
-    ContactSection.FormView.updateErrors(this.shadowRoot, this.state.errors);
+    ContactFormView.updateErrors(this.shadowRoot, this.state.errors);
     this.setState({ isSubmitting: true });
 
     const endpoint =
@@ -287,8 +149,8 @@ export class ContactSection extends BaseComponent {
         <div class="contact-card">
           ${
             isSubmitted
-              ? ContactSection.SuccessView.render(formData.email)
-              : ContactSection.FormView.render(formData, errors, isSubmitting)
+              ? ContactSuccessView.render(formData.email)
+              : ContactFormView.render(formData, errors, isSubmitting)
           }
         </div>
       </section>
@@ -297,3 +159,147 @@ export class ContactSection extends BaseComponent {
 }
 
 customElements.define("contact-section", ContactSection);
+
+
+// =============================================================================
+// File Bottom View Helpers (파일 하단 보조 뷰 클래스)
+// - 런타임에 호출되므로 파일 하단에 배치해도 호이스팅 문제 없이 정상 동작
+// =============================================================================
+
+/**
+ * [View Helper] 성공 피드백 뷰
+ */
+class ContactSuccessView {
+  static render(email) {
+    return `
+      <div class="success-box">
+        <span class="success-icon">🎉</span>
+        <h3 class="success-title">메시지가 성공적으로 전송되었습니다!</h3>
+        <p class="success-desc">확인 후 남겨주신 이메일(${email})로 회신드리겠습니다.</p>
+        <button id="reset-form-btn" class="reset-btn">새로운 메시지 작성하기</button>
+      </div>
+    `;
+  }
+
+  static bindEvents(shadowRoot, onReset) {
+    const resetBtn = shadowRoot.querySelector("#reset-form-btn");
+    resetBtn?.addEventListener("click", onReset);
+  }
+}
+
+/**
+ * [View Helper] 폼 입력 뷰
+ */
+class ContactFormView {
+  static render(formData, errors, isSubmitting) {
+    return `
+      <form id="contact-form" class="contact-form" novalidate>
+        <!-- 이름 입력 필드 -->
+        <div class="form-group">
+          <label for="name" class="form-label">
+            이름 <span class="required">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="name" 
+            name="name" 
+            class="form-input ${errors.name ? "invalid" : ""}" 
+            placeholder="홍길동"
+            value="${formData.name}"
+            aria-invalid="${errors.name ? "true" : "false"}"
+            required 
+          />
+          <span id="error-name" class="error-text" role="alert" aria-live="polite">${errors.name}</span>
+        </div>
+
+        <!-- 이메일 입력 필드 -->
+        <div class="form-group">
+          <label for="email" class="form-label">
+            이메일 주소 <span class="required">*</span>
+          </label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            class="form-input ${errors.email ? "invalid" : ""}" 
+            placeholder="example@domain.com"
+            value="${formData.email}"
+            aria-invalid="${errors.email ? "true" : "false"}"
+            required 
+          />
+          <span id="error-email" class="error-text" role="alert" aria-live="polite">${errors.email}</span>
+        </div>
+
+        <!-- 메시지 입력 필드 -->
+        <div class="form-group">
+          <label for="message" class="form-label">
+            문의 내용 <span class="required">*</span>
+          </label>
+          <textarea 
+            id="message" 
+            name="message" 
+            class="form-textarea ${errors.message ? "invalid" : ""}" 
+            rows="5" 
+            placeholder="궁금한 점이나 제안하고 싶으신 내용을 자유롭게 작성해주세요."
+            aria-invalid="${errors.message ? "true" : "false"}"
+            required
+          >${formData.message}</textarea>
+          <span id="error-message" class="error-text" role="alert" aria-live="polite">${errors.message}</span>
+        </div>
+
+        <!-- 제출 버튼 -->
+        <button type="submit" class="submit-btn" ${isSubmitting ? "disabled" : ""}>
+          ${isSubmitting ? "전송 중..." : "메시지 보내기 🚀"}
+        </button>
+      </form>
+    `;
+  }
+
+  static bindEvents(shadowRoot, { onInput, onSubmit }) {
+    const form = shadowRoot.querySelector("#contact-form");
+    if (!form) return;
+
+    ["name", "email", "message"].forEach((field) => {
+      const el = shadowRoot.querySelector(`#${field}`);
+      el?.addEventListener("input", (e) => onInput(field, e.target.value));
+    });
+
+    form.addEventListener("submit", onSubmit);
+  }
+
+  static updateErrors(shadowRoot, errors) {
+    let firstErrorField = null;
+
+    ["name", "email", "message"].forEach((field) => {
+      const errorEl = shadowRoot.querySelector(`#error-${field}`);
+      const inputEl = shadowRoot.querySelector(`#${field}`);
+      const hasError = Boolean(errors[field]);
+
+      if (errorEl) {
+        errorEl.textContent = errors[field] || "";
+      }
+
+      if (inputEl) {
+        inputEl.classList.toggle("invalid", hasError);
+        inputEl.setAttribute("aria-invalid", hasError ? "true" : "false");
+        if (hasError && !firstErrorField) {
+          firstErrorField = inputEl;
+        }
+      }
+    });
+
+    if (firstErrorField) {
+      firstErrorField.focus();
+    }
+  }
+
+  static clearFieldError(shadowRoot, fieldName) {
+    const errorEl = shadowRoot.querySelector(`#error-${fieldName}`);
+    const inputEl = shadowRoot.querySelector(`#${fieldName}`);
+    if (errorEl) errorEl.textContent = "";
+    if (inputEl) {
+      inputEl.classList.remove("invalid");
+      inputEl.setAttribute("aria-invalid", "false");
+    }
+  }
+}
