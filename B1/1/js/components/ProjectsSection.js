@@ -16,6 +16,7 @@ export class ProjectsSection extends BaseComponent {
     super();
     this.state = {
       ...this.state,
+      isLoading: true, // ⭐️ 비동기 통신 전 첫 프레임부터 스켈레톤을 띄우기 위해 true로 초기화
       repos: [],
       languages: ["All"],
       selectedLanguage: "All",
@@ -94,6 +95,7 @@ export class ProjectsSection extends BaseComponent {
     ];
 
     this.setState({
+      isLoading: false,
       repos,
       languages: langs,
       selectedLanguage: "All",

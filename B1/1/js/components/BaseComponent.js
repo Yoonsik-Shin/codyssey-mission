@@ -95,26 +95,77 @@ export class BaseComponent extends HTMLElement {
     return null;
   }
 
-  // 스타일시트 초기 1회 주입
+  // 스타일시트 초기 1회 주입 및 FOUC 방지 (스타일 다운로드 완료 전 날 것의 HTML 노출 방지)
   #ensureStyles() {
     if (this.#stylesInjected) return;
     this.#stylesInjected = true;
+
+    // ⭐️ 1. 인라인 크리티컬 CSS: 외부 CSS가 다운로드되기 전에도 스켈레톤과 기본 레이아웃이 즉시 깨짐 없이 동작하도록 보장
+    const criticalStyle = document.createElement("style");
+    criticalStyle.textContent = `
+      :host { display: block; }
+      .component-container {
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+      .component-container.styles-ready {
+        opacity: 1;
+      }
+      .base-skeleton-bar {
+        height: 16px;
+        border-radius: 6px;
+        background: linear-gradient(90deg, rgba(125,125,125,0.08) 25%, rgba(125,125,125,0.18) 50%, rgba(125,125,125,0.08) 75%);
+        background-size: 200% 100%;
+        animation: base-shimmer 1.6s infinite linear;
+      }
+      @keyframes base-shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+    `;
+    this.shadowRoot.appendChild(criticalStyle);
+
+    // ⭐️ 2. 외부 CSS 링크 생성 및 로드 완료 대기
+    const links = [];
 
     const baseLink = document.createElement("link");
     baseLink.rel = "stylesheet";
     baseLink.href = BaseComponent.resolveCss("BaseComponent.css");
     this.shadowRoot.appendChild(baseLink);
+    links.push(baseLink);
 
     if (this.cssPath) {
       const childLink = document.createElement("link");
       childLink.rel = "stylesheet";
       childLink.href = this.cssPath;
       this.shadowRoot.appendChild(childLink);
+      links.push(childLink);
     }
 
     const container = document.createElement("div");
     container.className = "component-container";
     this.shadowRoot.appendChild(container);
+
+    // ⭐️ 3. CSS 로드가 완료되면 opacity: 1로 부드럽게 전환하여 FOUC 원천 차단
+    let loadedCount = 0;
+    const onStyleReady = () => {
+      loadedCount++;
+      if (loadedCount >= links.length) {
+        container.classList.add("styles-ready");
+      }
+    };
+
+    links.forEach((link) => {
+      link.addEventListener("load", onStyleReady, { once: true });
+      link.addEventListener("error", onStyleReady, { once: true }); // 오류 시에도 콘텐츠는 보여야 함
+    });
+
+    // 만약 캐시 등으로 이미 로드된 경우를 위한 안전장치
+    requestAnimationFrame(() => {
+      if (loadedCount >= links.length) {
+        container.classList.add("styles-ready");
+      }
+    });
   }
 
   // 내부 렌더링 로직 (스타일 재파싱 방지 및 컨텐츠 영역만 업데이트)
