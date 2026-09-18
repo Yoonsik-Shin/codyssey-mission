@@ -144,8 +144,19 @@ export class ContactSection extends BaseComponent {
     this.setState({ isSubmitting: true });
 
     try {
-      // Formspree/EmailJS 등 백엔드 전송 대기 모사
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      // Formspree 실제 이메일 전송 API 호출 (보너스 요구사항 충족)
+      const res = await fetch("https://formspree.io/f/myezyrkk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(this.state.formData),
+      });
+
+      if (!res.ok) {
+        throw new Error(`이메일 전송 실패 (상태 코드: ${res.status})`);
+      }
 
       this.setState({
         isSubmitting: false,
@@ -156,7 +167,7 @@ export class ContactSection extends BaseComponent {
       this.setState({
         isSubmitting: false,
         errors: {
-          message: "메시지 전송 중 문제가 발생했습니다. 다시 시도해주세요.",
+          message: "메시지 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
         },
       });
     }
