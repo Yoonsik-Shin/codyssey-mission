@@ -171,7 +171,92 @@ export class BaseComponent extends HTMLElement {
 
 ---
 
-## 5. 컴포넌트 분리의 적정선 (과도한 분리 방지)
+## 5. ⭐️ [A to Z] 브라우저 웹 컴포넌트 완벽 렌더링 라이프사이클 흐름도
+
+브라우저가 HTML을 처음 읽는 순간부터 최종 데이터가 화면에 출력될 때까지 **언제, 어떤 것이, 어떻게 렌더링되는지**의 전체 흐름입니다.
+
+### 1) 한눈에 보는 통합 렌더링 타임라인 흐름도
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 사용자
+    participant Browser as 브라우저 엔진 (HTML/CSS 파서)
+    participant Module as main.js (진입점)
+    participant Comp as ProjectsSection (컴포넌트 인스턴스)
+    participant Shadow as Shadow DOM (격리 렌더 트리)
+    participant Net as GitHub API (백그라운드 통신)
+
+    Note over User,Browser: [단계 1: 브라우저 초기 로딩]
+    User->>Browser: index.html 요청 및 파싱 시작
+    Browser->>Browser: <header>, <main>, <project-section> 태그 파싱
+    Note over Browser: <project-section>은 아직 미등록 상태<br/>(HTMLUnknownElement로 일단 DOM에 자리만 잡아둠)
+    
+    Note over Browser,Module: [단계 2: 자바스크립트 모듈 실행 & 업그레이드]
+    Browser->>Module: defer 스크립트 실행 (main.js)
+    Module->>Comp: customElements.define('project-section', ProjectsSection)
+    Browser->>Comp: ⭐️ 커스텀 엘리먼트 업그레이드!<br/>new ProjectsSection() [constructor 실행]
+    Note over Comp: this.state = { isLoading: true, repos: [] }<br/>attachShadow({ mode: 'open' })
+
+    Note over Comp,Shadow: [단계 3: 첫 번째 렌더링 (First Paint: 스켈레톤)]
+    Comp->>Comp: connectedCallback() 진입
+    Comp->>Shadow: #renderWithStyle() 호출
+    Comp->>Shadow: 1) <style> 인라인 크리티컬 CSS 주입 (쉬머 애니메이션 즉각 가동)
+    Comp->>Shadow: 2) 외부 CSS (<link>) 비동기 다운로드 요청 트리거
+    Comp->>Shadow: 3) isLoading: true 분기 -> ProjectsLoadingView.render() 주입
+    Note over Shadow,Browser: ⚡️ 0ms 즉시 실행: 사용자는 빈 화면 대신 스켈레톤 카드를 봄!
+    
+    Note over Comp,Net: [단계 4: 비동기 데이터 요청 (Non-blocking)]
+    Comp->>Comp: #handleMounted() -> mounted() 호출
+    Comp->>Net: #fetchRepositories() (fetch() 백그라운드 호출)
+    Note over Comp,Net: 💡 API 응답을 기다리지 않고 브라우저는 화면을 계속 그림!
+
+    Note over Browser,Shadow: [단계 5: CSS 다운로드 완료 & 페이드인]
+    Browser-->>Shadow: ProjectsSection.css 다운로드 완료 (link.onload)
+    Shadow->>Shadow: .component-container에 'styles-ready' 클래스 추가
+    Note over Shadow,User: 🎨 FOUC(날 것의 글자 깜빡임) 없이 부드러운 Fade-in 전환
+
+    Note over Net,Comp: [단계 6: 데이터 도착 & 최종 재렌더링]
+    Net-->>Comp: GitHub API 200 OK 응답 (JSON 데이터 도착)
+    Comp->>Comp: this.setState({ repos: data, isLoading: false })
+    Comp->>Shadow: #renderWithStyle() 재호출
+    Comp->>Shadow: isLoading: false 분기 -> ProjectsGridView.render() 템플릿 주입
+    Comp->>Shadow: setEvents() 실행 (언어 필터 버튼 이벤트 리스너 바인딩)
+    Note over Shadow,User: 🎉 스켈레톤이 실제 GitHub 프로젝트 카드들로 깔끔하게 교체 완료!
+```
+
+---
+
+### 2) 단계별 핵심 동작 요약표
+
+| 단계 | 실행 시점 | 렌더링 주체 | 실제 화면에 그려지는 내용 (화면 상태) | 핵심 설계 의도 & 기술 포인트 |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. HTML 파싱** | `0ms` | 브라우저 엔진 | 헤더, 푸터 등 일반 HTML 요소만 노출 | `<project-section>`은 미등록 상태로 대기 |
+| **2. 인스턴스 생성** | `~10ms` | `constructor()` | 화면 변화 없음 (메모리 상태) | `attachShadow()`, 초기 상태 `isLoading: true` 확정 |
+| **3. 1차 렌더링** | `~15ms` | `connectedCallback()` | **✨ 스켈레톤 쉬머 애니메이션 노출** | 외부 CSS 지연 시에도 깨지지 않도록 인라인 크리티컬 스타일 즉시 가동 |
+| **4. 비동기 통신** | `~20ms` | `mounted()` | **스켈레톤 유지 (화면 멈춤 없음)** | **비차단(Non-blocking)**: 메인 스레드를 멈추지 않고 백그라운드에서 `fetch()` |
+| **5. 스타일 동기화** | `~50ms` | `<link onload>` | 스켈레톤 레이아웃이 정확한 그리드로 정렬 | CSS가 늦게 로드되더라도 글자만 튀는 **FOUC 완벽 방지 (`styles-ready`)** |
+| **6. 2차 재렌더링** | `~300ms` | `setState()` | **🚀 실제 GitHub 프로젝트 카드 완성 화면** | `isLoading: false`로 전환되면서 템플릿 교체 및 이벤트 리스너 바인딩 |
+
+---
+
+### 3) 만약 API에서 에러가 발생한다면? (에러 라이프사이클)
+
+```mermaid
+flowchart LR
+    A["mounted() fetch() 실패"] --> B["1초 후 1차 재시도"]
+    B --> C["2초 후 2차 재시도 (지수 백오프)"]
+    C --> D["최종 실패: catch(err)"]
+    D --> E["setState({ isLoading: false, error: err })"]
+    E --> F["#renderWithStyle() 재호출"]
+    F --> G["ProjectsErrorView.render()<br/>(⚠️ 에러 메시지 + [다시 시도] 버튼 렌더링)"]
+    G --> H["사용자가 [다시 시도] 클릭"]
+    H --> I["sessionStorage.clear() 후 다시 3단계(스켈레톤)로 진입"]
+```
+
+---
+
+## 6. 컴포넌트 분리의 적정선 (과도한 분리 방지)
 
 | 분류                       | 대상                                                                                                | 분리 판단 기준                                                                                                                 |
 | :------------------------- | :-------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
