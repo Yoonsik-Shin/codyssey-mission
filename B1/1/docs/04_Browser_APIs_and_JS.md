@@ -4,7 +4,33 @@
 
 ---
 
-## 1. Intersection Observer API (스크롤 감지 최적화)
+## 1. 웹 표준 이벤트 처리: `addEventListener` vs `onclick` 인라인 속성
+
+본 프로젝트는 모든 사용자 인터랙션에 인라인 속성(`<button onclick="...">`)을 배제하고 표준 `addEventListener`를 채택했습니다.
+
+### 1) 두 방식의 비교 분석
+
+| 비교 항목 | `onclick` 인라인 속성 (`<button onclick="fn()">`) | `addEventListener` (`btn.addEventListener('click', fn)`) |
+| :--- | :--- | :--- |
+| **관심사 분리** | HTML(구조)과 JS(동작)가 뒤섞여 가독성/유지보수성 저하 | HTML은 마크업만, JS 모듈이 로직을 전담하여 완벽히 분리 |
+| **다중 리스너 등록** | **불가능** (새 핸들러 등록 시 이전 핸들러를 덮어씀) | **가능** (동일 요소/이벤트에 여러 독립 함수 등록 가능) |
+| **이벤트 전파 제어** | 버블링(Bubbling) 단계만 지원 | **캡처링(Capturing) 및 버블링 단계 선택 가능** |
+| **고급 옵션 지원** | 없음 | `{ passive: true }`(스크롤 최적화), `{ once: true }` 등 지원 |
+| **보안 (CSP)** | 인라인 스크립트 실행을 막는 보안 정책(CSP)에 위배 | 외부 분리 모듈로 안전하게 동작하여 CSP 가이드 준수 |
+
+### 2) "이벤트 → 상태 변경 → 화면 업데이트" 단방향 파이프라인
+
+모든 동적 컴포넌트는 이벤트가 직접 스타일이나 DOM을 어지럽게 고치지 않고, **상태를 거쳐 선언적으로 화면을 갱신**합니다.
+
+```mermaid
+graph LR
+    E["1. 사용자 이벤트<br/>(테마 버튼 클릭)"] --> S["2. 상태 변경<br/>(localStorage 저장 & 테마값 갱신)"]
+    S --> R["3. 화면 업데이트<br/>(html data-theme 속성 & 아이콘 변경)"]
+```
+
+---
+
+## 2. Intersection Observer API (스크롤 감지 최적화)
 
 기존 `window.addEventListener('scroll')` 방식은 스크롤할 때마다 수백 번씩 함수가 실행되어 메인 스레드 성능을 저하시킵니다. 반면 **Intersection Observer API**는 브라우저가 화면 교차 여부를 비동기적으로 효율적으로 감지합니다.
 
