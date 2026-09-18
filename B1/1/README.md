@@ -106,6 +106,38 @@ flowchart TD
     D2 --> D3
 ```
 
+### 💡 브라우저 콘솔(F12)에서 비동기 상태 직접 검증해보기
+
+실제 배포 사이트에서 개발자 도구(`F12`) 콘솔을 열고 아래 명령어를 입력하여 각 UI 상태를 즉시 확인할 수 있습니다:
+
+```javascript
+// 1. 로딩 상태 보기 (스켈레톤 반짝임 UI)
+document.querySelector('project-section').setState({ isLoading: true });
+// 👉 6개의 프로젝트 카드 자리에 반짝반짝 빛이 흐르는(Shimmer) 스켈레톤 카드가 나타납니다.
+
+// 2. 에러 상태 보기 (경고 아이콘 + '다시 시도' 버튼 UI)
+document.querySelector('project-section').setState({ 
+  isLoading: false, 
+  error: new Error("네트워크 연결이 끊어졌습니다. (테스트 에러)") 
+});
+// 👉 노란 경고 아이콘(⚠️), 에러 메시지, 그리고 [다시 시도] 버튼이 화면에 렌더링됩니다.
+// ([다시 시도] 버튼을 클릭하면 세션 캐시를 비우고 다시 정상 데이터를 가져옵니다.)
+
+// 3. 빈 상태(Empty State) 보기 ("표시할 프로젝트가 없습니다")
+document.querySelector('project-section').setState({ 
+  isLoading: false, 
+  error: null, 
+  repos: [] 
+});
+// 👉 폴더 아이콘(📂)과 함께 "표시할 프로젝트가 없습니다."라는 안내 박스가 뜹니다.
+
+// 4. 정상 상태로 복구하기
+const p = document.querySelector('project-section');
+p._isMounted = false;
+p.connectedCallback();
+// (또는 브라우저 새로고침 F5)
+```
+
 ---
 
 ## ✨ 5. 주요 기능 및 인터랙션

@@ -137,7 +137,33 @@ if (!res.ok) {
 }
 const data = await res.json();
 sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
-sessionStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
+```
+
+### 💡 브라우저 콘솔에서 상태 전환(로딩/에러/빈 상태) 검증
+
+컴포넌트의 단방향 상태 렌더링 파이프라인이 정상 동작하는지 브라우저 개발자 도구(F12) 콘솔에서 아래 명령어로 즉시 테스트할 수 있습니다:
+
+```javascript
+// 1. 로딩 상태 (스켈레톤 반짝임 UI)
+document.querySelector('project-section').setState({ isLoading: true });
+
+// 2. 에러 상태 (경고 아이콘 + '다시 시도' 버튼 UI)
+document.querySelector('project-section').setState({ 
+  isLoading: false, 
+  error: new Error("네트워크 연결이 끊어졌습니다. (테스트 에러)") 
+});
+
+// 3. 빈 상태 (Empty State - 표시할 프로젝트 없음)
+document.querySelector('project-section').setState({ 
+  isLoading: false, 
+  error: null, 
+  repos: [] 
+});
+
+// 4. 원래 상태로 복구
+const p = document.querySelector('project-section');
+p._isMounted = false;
+p.connectedCallback();
 ```
 
 ---
