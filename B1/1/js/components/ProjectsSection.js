@@ -1,172 +1,172 @@
 import { BaseComponent } from "./BaseComponent.js";
 
 /**
- * [Internal View Helper 1] 로딩 상태 뷰
- * - 카드 6개 스켈레톤 그리드 템플릿 전담
- */
-class ProjectsLoadingView {
-  static render() {
-    return `
-      <section class="projects-container">
-        <div class="projects-header">
-          <div>
-            <h2 class="section-title">Projects</h2>
-            <p class="section-desc">GitHub 저장소에서 최신 프로젝트 목록을 불러오는 중입니다...</p>
-          </div>
-        </div>
-        <div class="projects-grid">
-          ${Array.from({ length: 6 })
-            .map(
-              () => `
-            <div class="project-card" style="pointer-events: none;">
-              <div class="base-skeleton-bar title" style="margin-bottom: 16px; width: 60%;"></div>
-              <div class="base-skeleton-bar text" style="margin-bottom: 8px;"></div>
-              <div class="base-skeleton-bar text short" style="margin-bottom: 24px;"></div>
-              <div style="display: flex; justify-content: space-between; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-color, #f1f5f9);">
-                <div class="base-skeleton-bar" style="width: 50px; height: 20px; border-radius: 9999px;"></div>
-                <div class="base-skeleton-bar" style="width: 70px; height: 16px;"></div>
-              </div>
-            </div>
-          `,
-            )
-            .join("")}
-        </div>
-      </section>
-    `;
-  }
-}
-
-/**
- * [Internal View Helper 2] 에러 상태 뷰
- * - 에러 메시지 템플릿 및 [다시 시도] 버튼 바인딩 전담
- */
-class ProjectsErrorView {
-  static render(error) {
-    return `
-      <section class="projects-container">
-        <h2 class="section-title">Projects</h2>
-        <div class="projects-error-box">
-          <span class="error-icon">⚠️</span>
-          <p class="error-message">프로젝트를 불러올 수 없습니다.</p>
-          <small class="error-detail">${error?.message || error}</small>
-          <button id="retry-btn" class="retry-btn">다시 시도</button>
-        </div>
-      </section>
-    `;
-  }
-
-  static bindEvents(shadowRoot, onRetry) {
-    const retryBtn = shadowRoot.querySelector("#retry-btn");
-    retryBtn?.addEventListener("click", onRetry);
-  }
-}
-
-/**
- * [Internal View Helper 3] 프로젝트 그리드 & 필터 뷰
- * - 언어 필터 버튼군 및 성공/빈 상태 프로젝트 카드 그리드 렌더링 + 이벤트 위임 바인딩
- */
-class ProjectsGridView {
-  static render(repos, languages, selectedLanguage) {
-    const filteredRepos =
-      selectedLanguage === "All"
-        ? repos
-        : repos.filter((repo) => repo.language === selectedLanguage);
-
-    return `
-      <section class="projects-container">
-        <div class="projects-header">
-          <div>
-            <h2 class="section-title">Projects</h2>
-            <p class="section-desc">GitHub 저장소에서 실시간으로 연동된 최신 프로젝트 목록입니다.</p>
-          </div>
-
-          <!-- 언어 필터 버튼 목록 (요구사항 24) -->
-          ${
-            languages.length > 1
-              ? `
-            <div class="filter-group">
-              ${languages
-                .map(
-                  (lang) => `
-                <button 
-                  class="filter-btn ${lang === selectedLanguage ? "active" : ""}" 
-                  data-lang="${lang}"
-                >
-                  ${lang}
-                </button>
-              `,
-                )
-                .join("")}
-            </div>
-          `
-              : ""
-          }
-        </div>
-
-        ${
-          filteredRepos.length === 0
-            ? `
-          <div class="empty-box">
-            <span class="empty-icon">📂</span>
-            <p class="empty-message">표시할 프로젝트가 없습니다.</p>
-          </div>
-        `
-            : `
-          <div class="projects-grid">
-            ${filteredRepos
-              .map(
-                ({
-                  name,
-                  html_url,
-                  description,
-                  language,
-                  stargazers_count,
-                }) => `
-              <a href="${html_url}" target="_blank" rel="noopener noreferrer" class="project-card">
-                <div class="card-header">
-                  <h3 class="repo-name">${name}</h3>
-                  <span class="stars" title="Stars">⭐ ${stargazers_count}</span>
-                </div>
-                <p class="repo-desc">${description || "등록된 프로젝트 설명이 없습니다."}</p>
-                <div class="repo-footer">
-                  ${language ? `<span class="language-badge">${language}</span>` : "<span></span>"}
-                  <span class="view-link">View Repo ↗</span>
-                </div>
-              </a>
-            `,
-              )
-              .join("")}
-          </div>
-        `
-        }
-      </section>
-    `;
-  }
-
-  static bindEvents(shadowRoot, onSelectLanguage) {
-    const filterGroup = shadowRoot.querySelector(".filter-group");
-    if (filterGroup) {
-      filterGroup.addEventListener("click", (e) => {
-        const btn = e.target.closest(".filter-btn");
-        if (btn) {
-          const lang = btn.getAttribute("data-lang");
-          if (lang) {
-            onSelectLanguage(lang);
-          }
-        }
-      });
-    }
-  }
-}
-
-/**
  * [Main Controller Component] ProjectsSection
  * - 비동기 API 통신, 5분 세션 캐싱, 지수 백오프 및 컴포넌트 상태 관리 총괄
+ * - 파일 최상단에 메인 클래스를 배치하고, 하위 뷰는 static 내부 클래스로 캡슐화
  */
 export class ProjectsSection extends BaseComponent {
   get cssPath() {
     return BaseComponent.resolveCss("ProjectsSection.css");
   }
+
+  static #CACHE_EXPIRE = 1000 * 60 * 5; // 5분 캐시
+
+  /**
+   * [Nested Static View 1] 로딩 상태 뷰
+   */
+  static LoadingView = class {
+    static render() {
+      return `
+        <section class="projects-container">
+          <div class="projects-header">
+            <div>
+              <h2 class="section-title">Projects</h2>
+              <p class="section-desc">GitHub 저장소에서 최신 프로젝트 목록을 불러오는 중입니다...</p>
+            </div>
+          </div>
+          <div class="projects-grid">
+            ${Array.from({ length: 6 })
+              .map(
+                () => `
+              <div class="project-card" style="pointer-events: none;">
+                <div class="base-skeleton-bar title" style="margin-bottom: 16px; width: 60%;"></div>
+                <div class="base-skeleton-bar text" style="margin-bottom: 8px;"></div>
+                <div class="base-skeleton-bar text short" style="margin-bottom: 24px;"></div>
+                <div style="display: flex; justify-content: space-between; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-color, #f1f5f9);">
+                  <div class="base-skeleton-bar" style="width: 50px; height: 20px; border-radius: 9999px;"></div>
+                  <div class="base-skeleton-bar" style="width: 70px; height: 16px;"></div>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+        </section>
+      `;
+    }
+  };
+
+  /**
+   * [Nested Static View 2] 에러 상태 뷰
+   */
+  static ErrorView = class {
+    static render(error) {
+      return `
+        <section class="projects-container">
+          <h2 class="section-title">Projects</h2>
+          <div class="projects-error-box">
+            <span class="error-icon">⚠️</span>
+            <p class="error-message">프로젝트를 불러올 수 없습니다.</p>
+            <small class="error-detail">${error?.message || error}</small>
+            <button id="retry-btn" class="retry-btn">다시 시도</button>
+          </div>
+        </section>
+      `;
+    }
+
+    static bindEvents(shadowRoot, onRetry) {
+      const retryBtn = shadowRoot.querySelector("#retry-btn");
+      retryBtn?.addEventListener("click", onRetry);
+    }
+  };
+
+  /**
+   * [Nested Static View 3] 프로젝트 그리드 & 필터 뷰
+   */
+  static GridView = class {
+    static render(repos, languages, selectedLanguage) {
+      const filteredRepos =
+        selectedLanguage === "All"
+          ? repos
+          : repos.filter((repo) => repo.language === selectedLanguage);
+
+      return `
+        <section class="projects-container">
+          <div class="projects-header">
+            <div>
+              <h2 class="section-title">Projects</h2>
+              <p class="section-desc">GitHub 저장소에서 실시간으로 연동된 최신 프로젝트 목록입니다.</p>
+            </div>
+
+            <!-- 언어 필터 버튼 목록 (요구사항 24) -->
+            ${
+              languages.length > 1
+                ? `
+              <div class="filter-group">
+                ${languages
+                  .map(
+                    (lang) => `
+                  <button 
+                    class="filter-btn ${lang === selectedLanguage ? "active" : ""}" 
+                    data-lang="${lang}"
+                  >
+                    ${lang}
+                  </button>
+                `,
+                  )
+                  .join("")}
+              </div>
+            `
+                : ""
+            }
+          </div>
+
+          ${
+            filteredRepos.length === 0
+              ? `
+            <div class="empty-box">
+              <span class="empty-icon">📂</span>
+              <p class="empty-message">표시할 프로젝트가 없습니다.</p>
+            </div>
+          `
+              : `
+            <div class="projects-grid">
+              ${filteredRepos
+                .map(
+                  ({
+                    name,
+                    html_url,
+                    description,
+                    language,
+                    stargazers_count,
+                  }) => `
+                <a href="${html_url}" target="_blank" rel="noopener noreferrer" class="project-card">
+                  <div class="card-header">
+                    <h3 class="repo-name">${name}</h3>
+                    <span class="stars" title="Stars">⭐ ${stargazers_count}</span>
+                  </div>
+                  <p class="repo-desc">${description || "등록된 프로젝트 설명이 없습니다."}</p>
+                  <div class="repo-footer">
+                    ${language ? `<span class="language-badge">${language}</span>` : "<span></span>"}
+                    <span class="view-link">View Repo ↗</span>
+                  </div>
+                </a>
+              `,
+                )
+                .join("")}
+            </div>
+          `
+          }
+        </section>
+      `;
+    }
+
+    static bindEvents(shadowRoot, onSelectLanguage) {
+      const filterGroup = shadowRoot.querySelector(".filter-group");
+      if (filterGroup) {
+        filterGroup.addEventListener("click", (e) => {
+          const btn = e.target.closest(".filter-btn");
+          if (btn) {
+            const lang = btn.getAttribute("data-lang");
+            if (lang) {
+              onSelectLanguage(lang);
+            }
+          }
+        });
+      }
+    }
+  };
 
   constructor() {
     super();
@@ -177,8 +177,6 @@ export class ProjectsSection extends BaseComponent {
       selectedLanguage: "All",
     };
   }
-
-  static #CACHE_EXPIRE = 1000 * 60 * 5; // 5분 캐시
 
   async mounted() {
     await this.#fetchRepositories();
@@ -260,7 +258,7 @@ export class ProjectsSection extends BaseComponent {
 
   setEvents() {
     if (this.state.error) {
-      ProjectsErrorView.bindEvents(this.shadowRoot, async () => {
+      ProjectsSection.ErrorView.bindEvents(this.shadowRoot, async () => {
         sessionStorage.clear();
         this.setState({ isLoading: true, error: null });
         try {
@@ -273,7 +271,7 @@ export class ProjectsSection extends BaseComponent {
       return;
     }
 
-    ProjectsGridView.bindEvents(this.shadowRoot, (lang) => {
+    ProjectsSection.GridView.bindEvents(this.shadowRoot, (lang) => {
       if (lang !== this.state.selectedLanguage) {
         this.setState({ selectedLanguage: lang });
       }
@@ -281,16 +279,16 @@ export class ProjectsSection extends BaseComponent {
   }
 
   renderLoading() {
-    return ProjectsLoadingView.render();
+    return ProjectsSection.LoadingView.render();
   }
 
   renderError(error) {
-    return ProjectsErrorView.render(error);
+    return ProjectsSection.ErrorView.render(error);
   }
 
   render() {
     const { repos, languages, selectedLanguage } = this.state;
-    return ProjectsGridView.render(repos, languages, selectedLanguage);
+    return ProjectsSection.GridView.render(repos, languages, selectedLanguage);
   }
 }
 
