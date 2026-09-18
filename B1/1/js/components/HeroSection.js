@@ -32,12 +32,13 @@ export class HeroSection extends BaseComponent {
     }
   }
 
-  // 타자기 효과 실행
+  // 타자기 효과 실행 (유니코드/이모지 서로게이트 페어 깨짐 방지)
   #runTypewriterEffect() {
     const textEl = this.shadowRoot.querySelector(".typewriter-text");
     if (!textEl) return;
 
-    const currentPhrase = this.#phrases[this.#phraseIndex];
+    // 이모지(서로게이트 페어)가 반으로 쪼개져 물음표()로 깨지는 것을 방지하기 위해 유니코드 단위 배열로 분해
+    const currentChars = Array.from(this.#phrases[this.#phraseIndex]);
 
     if (this.#isDeleting) {
       this.#charIndex--;
@@ -45,11 +46,11 @@ export class HeroSection extends BaseComponent {
       this.#charIndex++;
     }
 
-    textEl.textContent = currentPhrase.substring(0, this.#charIndex);
+    textEl.textContent = currentChars.slice(0, this.#charIndex).join("");
 
     let speed = this.#isDeleting ? 40 : 80;
 
-    if (!this.#isDeleting && this.#charIndex === currentPhrase.length) {
+    if (!this.#isDeleting && this.#charIndex === currentChars.length) {
       speed = 1800; // 한 문장 완료 후 대기
       this.#isDeleting = true;
     } else if (this.#isDeleting && this.#charIndex === 0) {

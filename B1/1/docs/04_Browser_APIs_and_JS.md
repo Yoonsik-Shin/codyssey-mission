@@ -202,14 +202,25 @@ document.querySelector('project-section').reload();
 
 ```javascript
 mounted() {
-  this.type(); // 시작
+  this.#runTypewriterEffect(); // 시작
 }
 
 unmounted() {
-  if (this.timer) {
-    clearTimeout(this.timer); // 화면에서 없어지면 즉시 중단!
+  if (this.#timer) {
+    clearTimeout(this.#timer); // 화면에서 없어지면 즉시 중단!
   }
 }
+```
+
+### ⭐️ 유니코드 및 이모지 서로게이트 페어(Surrogate Pair) 깨짐 방지
+
+- **문제**: 이모지(👋, 🚀, 💡 등)는 UTF-16에서 2개의 코드 유닛(`length === 2`)을 차지합니다. `String.prototype.substring()`으로 자르면 이모지의 앞쪽 절반만 잘리는 순간 브라우저가 유효하지 않은 문자로 인식하여 **물음표 다이아몬드 기호(``)**를 1틱 동안 렌더링하게 됩니다.
+- **해결**: `Array.from(phrase)` 또는 스프레드 문법(`[...phrase]`)을 활용하여 문자열을 사람이 인지하는 **온전한 유니코드 글자(Code Point) 단위 배열**로 분해한 뒤 `slice()` 처리함으로써 이모지 깨짐 현상을 원천 방지했습니다.
+
+```javascript
+// 이모지까지 온전하게 1글자로 취급
+const currentChars = Array.from(this.#phrases[this.#phraseIndex]);
+textEl.textContent = currentChars.slice(0, this.#charIndex).join("");
 ```
 
 ---
