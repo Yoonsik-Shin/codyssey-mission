@@ -65,7 +65,7 @@
 | 번호 | 요구사항 | 구현 내용 및 세부 사항 | 상태 | 관련 파일 |
 | :--- | :--- | :--- | :---: | :--- |
 | **7, 17** | **Form 유효성 검사** | - `event.preventDefault()`로 폼 기본 제출 동작 차단<br>- 필수 입력값 검증 (이름, 이메일, 내용 빈 값 방지)<br>- 이메일 정규표현식(`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) 포맷 검증<br>- 입력 필드 하단에 실시간 인라인 에러 메시지 노출 (`aria-live="polite"`)<br>- input 이벤트 발생 시 기존 에러 메시지 자동 초기화 | ✅ | [`ContactSection.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/components/ContactSection.js) |
-| **2-5** | **제출 피드백 & 전송 처리** | - 제출 성공 시 카드 형태의 축하 성공 메시지 UI 표시 및 재작성 버튼 제공<br>- 이메일 서비스(Formspree, EmailJS 등) 연동 가능한 비동기 핸들러 구조화 | ✅ | [`ContactSection.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/components/ContactSection.js) |
+| **2-5** | **제출 피드백 & 실제 이메일 전송** | - 제출 성공 시 카드 형태의 축하 성공 메시지 UI 표시 및 재작성 버튼 제공<br>- **Formspree API(`https://formspree.io/f/myezyrkk`) 실제 연동 완료**하여 사용자 문의 메일 즉시 발송 | ✅ | [`ContactSection.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/components/ContactSection.js) |
 | **17** | **Label 연결 접근성** | - `<label for="...">`와 `<input id="...">`, `<textarea id="...">` 1:1 완벽 매칭 | ✅ | [`ContactSection.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/components/ContactSection.js) |
 
 ---
