@@ -248,3 +248,33 @@ HTML 파서는 `<script>` 태그를 만나는 순간 파싱을 일시 중단(Par
 - ES 모듈(`type="module"`)은 브라우저 표준 사양상 기본적으로 **지연 평가(Deferred execution)** 방식으로 동작합니다. 즉, HTML 파싱을 블로킹하지 않고 백그라운드에서 다운로드된 뒤 DOM 트리가 완성된 후 실행됩니다.
 - 본 프로젝트에서는 모듈 자체의 지연 로딩 특성을 활용함과 동시에, **과제 요구사항 및 정적 검사기 기준을 명확히 충족하기 위해 `<script type="module" defer src="./js/main.js"></script>` 형태로 `defer` 속성을 명시**하였습니다.
 - 이를 통해 DOM 요소를 조회(`querySelector`)하는 초기화 코드(`initTheme`, `initNavigation` 등)가 항상 완성된 DOM 트리 위에서 에러 없이 안정적으로 동작하도록 보장합니다.
+
+---
+
+## 7. 대규모 데이터 확장성 및 성능 최적화 (Future-Proofing)
+
+### 1) 지수 백오프(Exponential Backoff) 재시도 전략
+
+일시적인 네트워크 지연이나 간헐적 패킷 유실로 API 요청이 실패할 경우, 즉각 에러 화면을 노출하기보다 **지수 백오프(1초 → 2초) 간격으로 최대 2회까지 자동 재시도**하여 회복 탄력성(Resilience)을 확보했습니다.
+
+```javascript
+async #fetchWithRetry(url, retries = 2, delay = 1000) {
+  try {
+    return await fetch(url);
+  } catch (error) {
+    if (retries <= 0) throw error;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    return this.#fetchWithRetry(url, retries - 1, delay * 2);
+  }
+}
+```
+
+### 2) 저장소가 수백 개로 늘어날 경우의 가상화(Virtualization) 설계 전략
+
+현재 포트폴리오 규모(12개 저장소)에서는 CSS Grid 단일 렌더링으로도 충분히 60fps가 유지되지만, 프로젝트가 100~1,000개 이상으로 늘어날 경우를 대비한 2가지 확장 아키텍처입니다:
+
+1. **무한 스크롤 & 커서 기반 페이징 (Infinite Scroll with Pagination)**:
+   - GitHub API의 `page` 및 `per_page=12` 쿼리 파라미터를 활용
+   - 목록 맨 끝에 보이지 않는 센티넬(`sentinel`) 요소를 두고, `IntersectionObserver`로 감지될 때마다 다음 12개를 점진적 누적 렌더링
+2. **DOM 가상화 (Virtual Scrolling / Virtualization)**:
+   - 뷰포트에 현재 보이는 영역(예: 화면에 노출되는 카드 6~9개)과 상하 버퍼만 실제 DOM에 유지하고, 스크롤을 벗어난 카드는 DOM 트리에서 제거하여 메모리 점유율과 DOM 노드 수를 일정하게 유지하는 방식

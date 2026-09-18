@@ -25,7 +25,42 @@
 
 ---
 
-## 🛠️ 3. 기술 스택 (Tech Stack)
+## 📁 3. 프로젝트 폴더 구조 (Directory Structure)
+
+본 프로젝트는 순수 웹 표준에 따라 역할별로 디렉토리를 분리했습니다:
+
+```text
+B1/1/
+├── index.html                  # 애플리케이션 진입점 및 시맨틱 레이아웃
+├── css/
+│   ├── style.css               # 전역 CSS 변수(:root, 다크모드), 리셋, 헤더/네비게이션
+│   └── components/             # 컴포넌트별 캡슐화 스타일시트
+│       ├── AboutSection.css
+│       ├── BaseComponent.css   # 스켈레톤, 스피너, 에러 박스 공통 테마 스타일
+│       ├── ContactSection.css
+│       ├── HeroSection.css
+│       ├── ProjectsSection.css # Grid 카드 레이아웃 및 필터 버튼
+│       └── SkillsSection.css
+├── js/
+│   ├── main.js                 # 스크립트 진입점 (테마, 햄버거, 스크롤 인터랙션)
+│   └── components/             # Web Components (Custom Elements)
+│       ├── AboutSection.js
+│       ├── BaseComponent.js    # 상태 관리(setState) 및 수명주기 베이스 클래스
+│       ├── ContactSection.js   # 폼 유효성 검증 및 Formspree 이메일 전송
+│       ├── HeroSection.js      # 타자기 애니메이션
+│       ├── ProjectsSection.js  # GitHub REST API 연동, 4대 상태 렌더링
+│       └── SkillsSection.js
+├── images/                     # 이미지 에셋 및 평가용 스크린샷
+│   ├── profile.jpg             # 프로필 이미지
+│   ├── screenshot-desktop.png  # 데스크톱 라이트 모드 캡처
+│   ├── screenshot-darkmode.png # 데스크톱 다크 모드 캡처
+│   └── screenshot-mobile.png   # 모바일 반응형 캡처
+└── docs/                       # 상세 아키텍처 및 심화 학습 가이드 (5종)
+```
+
+---
+
+## 🛠️ 4. 기술 스택 (Tech Stack)
 
 - **언어 및 표준**: HTML5 (시맨틱 마크업), CSS3 (CSS Variables, Flexbox, Grid), Modern JavaScript (ES6+ Modules)
 - **컴포넌트 아키텍처**: Web Components (`Custom Elements`, `Shadow DOM`, `BaseComponent`)
@@ -34,9 +69,16 @@
 
 ---
 
-## 🔄 4. 화면 렌더링 파이프라인 시각화 (Rendering Lifecycle)
+## 🔄 5. 화면 렌더링 파이프라인 및 상태 관리 (Architecture)
 
 본 프로젝트는 외부 프레임워크(React 등) 없이 **브라우저 네이티브 Web Components와 `BaseComponent` 기반의 단방향 데이터 흐름(Unidirectional Data Flow)**으로 화면을 렌더링합니다.
+
+### 💡 전역 상태(Global State) vs 컴포넌트 로컬 상태(Local State) 분리 기준
+
+| 구분 | 관리 위치 | 대상 데이터 | 렌더링 전파 방식 |
+| :--- | :--- | :--- | :--- |
+| **전역 상태 (Global)** | `html[data-theme]` & `localStorage` | 다크/라이트 테마 설정 | 부모 DOM의 속성 변경이 CSS 변수를 통해 Shadow DOM 내부로 자동 상속 및 일괄 반영 |
+| **컴포넌트 로컬 상태 (Local)** | 각 컴포넌트 인스턴스의 `this.state` | 로딩(`isLoading`), 에러(`error`), 데이터(`repos`, `formData`) | `this.setState(newState)` 호출 시 해당 컴포넌트의 Shadow DOM만 국소 재렌더링 |
 
 ### 1) 초기 마운트 및 업그레이드(Upgrade) 흐름
 
@@ -140,11 +182,18 @@ p.connectedCallback();
 
 ---
 
-## ✨ 5. 주요 기능 및 인터랙션
+## ✨ 6. 주요 기능 및 인터랙션
 
 1. **모바일 퍼스트 반응형 레이아웃**:
    - 뷰포트에 따른 유연한 그리드 레이아웃 (모바일 `< 768px`, 태블릿 `768px ~ 1023px`, 데스크톱 `≥ 1024px`)
    - 모바일 환경 전용 햄버거 토글 메뉴 및 네비게이션 드로어
+
+   | 뷰포트 너비 | 기기 분류 | 레이아웃 및 UI 주요 특징 |
+   | :--- | :--- | :--- |
+   | **`< 768px`** | 모바일 (기본) | • 네비게이션 숨김 및 햄버거 버튼 노출<br>• Hero / About / Contact 1열 세로 배치<br>• Projects / Skills 카드 1열 배치 |
+   | **`768px ~ 1023px`** | 태블릿 | • 햄버거 버튼 숨김 및 가로 네비게이션 바 노출<br>• About 본문 및 프로필 2열 배치 (`flex-direction: row`)<br>• Projects 카드 2열 그리드 배치 |
+   | **`≥ 1024px`** | 데스크톱 | • 최대 너비(`1080px`) 중앙 정렬 및 여백 확보<br>• Projects 카드 3열 그리드 자동 확장<br>• 풍부한 마우스 Hover 마이크로 인터랙션 활성화 |
+
 2. **다크 모드 시스템**:
    - `prefers-color-scheme` OS 시스템 테마 자동 감지 및 실시간 변경 리스너
    - `localStorage` 테마 영속성(새로고침 후에도 유지)
