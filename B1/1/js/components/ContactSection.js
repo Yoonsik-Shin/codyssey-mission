@@ -156,11 +156,8 @@ export class ContactSection extends BaseComponent {
   }
 }
 
-customElements.define("contact-section", ContactSection);
-
 // =============================================================================
 // File Bottom View Helpers (파일 하단 보조 뷰 클래스)
-// - 런타임에 호출되므로 파일 하단에 배치해도 호이스팅 문제 없이 정상 동작
 // =============================================================================
 
 /**
@@ -300,3 +297,7 @@ class ContactFormView {
     }
   }
 }
+
+// ⭐️ 모든 클래스(메인 및 보조 뷰)가 선언 완료된 후 커스텀 엘리먼트로 등록 (TDZ 방지)
+customElements.define("contact-section", ContactSection);
+
