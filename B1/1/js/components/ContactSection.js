@@ -115,6 +115,18 @@ export class ContactSection extends BaseComponent {
     return { isValid, errors };
   }
 
+  // 🔒 Private 메서드: 에러 메시지 돔 미세 업데이트 (전체 innerHTML 재파싱 방지)
+  #applyErrorsToDom(errors) {
+    ["name", "email", "message"].forEach((field) => {
+      const errorEl = this.shadowRoot.querySelector(`#error-${field}`);
+      const inputEl = this.shadowRoot.querySelector(`#${field}`);
+      if (errorEl) errorEl.textContent = errors[field] || "";
+      if (inputEl) {
+        inputEl.classList.toggle("invalid", Boolean(errors[field]));
+      }
+    });
+  }
+
   // 🔒 Private 메서드: 폼 제출 핸들러
   async #handleSubmit(event) {
     event.preventDefault(); // 기본 폼 제출 동작 방지 (요구사항 17)
@@ -122,11 +134,14 @@ export class ContactSection extends BaseComponent {
     const { isValid, errors } = this.#validateForm();
 
     if (!isValid) {
-      this.setState({ errors });
+      this.state.errors = errors;
+      this.#applyErrorsToDom(errors);
       return;
     }
 
-    this.setState({ isSubmitting: true, errors: { name: "", email: "", message: "" } });
+    this.state.errors = { name: "", email: "", message: "" };
+    this.#applyErrorsToDom(this.state.errors);
+    this.setState({ isSubmitting: true });
 
     try {
       // Formspree/EmailJS 등 백엔드 전송 대기 모사

@@ -65,8 +65,32 @@ export class BaseComponent extends HTMLElement {
     return null;
   }
 
-  // 내부 렌더링 로직 (공통 로딩/에러 분기 및 CSS 링크 포함)
+  // 스타일시트 초기 1회 주입
+  _ensureStyles() {
+    if (this._stylesInjected) return;
+    this._stylesInjected = true;
+
+    const baseLink = document.createElement("link");
+    baseLink.rel = "stylesheet";
+    baseLink.href = BaseComponent.resolveCss("BaseComponent.css");
+    this.shadowRoot.appendChild(baseLink);
+
+    if (this.cssPath) {
+      const childLink = document.createElement("link");
+      childLink.rel = "stylesheet";
+      childLink.href = this.cssPath;
+      this.shadowRoot.appendChild(childLink);
+    }
+
+    const container = document.createElement("div");
+    container.className = "component-container";
+    this.shadowRoot.appendChild(container);
+  }
+
+  // 내부 렌더링 로직 (스타일 재파싱 방지 및 컨텐츠 영역만 업데이트)
   _renderWithStyle() {
+    this._ensureStyles();
+
     let html = "";
 
     if (this.state.error) {
@@ -82,13 +106,10 @@ export class BaseComponent extends HTMLElement {
       }
     }
 
-    this.shadowRoot.innerHTML = `
-      <!-- BaseComponent 공통 스타일 (스켈레톤, 스피너, 에러 박스) -->
-      <link rel="stylesheet" href="${BaseComponent.resolveCss("BaseComponent.css")}">
-      <!-- 자식 컴포넌트 전용 스타일 -->
-      ${this.cssPath ? `<link rel="stylesheet" href="${this.cssPath}">` : ""}
-      ${html}
-    `;
+    const container = this.shadowRoot.querySelector(".component-container");
+    if (container) {
+      container.innerHTML = html;
+    }
 
     // 로딩 및 에러 상태가 아닐 때만 이벤트 등록
     if (!this.state.isLoading && !this.state.error) {
