@@ -193,8 +193,8 @@ sequenceDiagram
     participant Browser as 브라우저 엔진 (HTML/CSS 파서)
     participant Module as main.js (진입점)
     participant Comp as ProjectsSection (컴포넌트 인스턴스)
-    participant Shadow as Shadow DOM (격리 렌더 트리)
     participant Net as GitHub API (백그라운드 통신)
+    participant Shadow as Shadow DOM (격리 렌더 트리)
 
     Note over User,Browser: [단계 1: 브라우저 초기 로딩]
     User->>Browser: index.html 요청 및 파싱 시작
@@ -213,19 +213,19 @@ sequenceDiagram
     Comp->>Shadow: 1) <style> 인라인 크리티컬 CSS 주입 (쉬머 애니메이션 즉각 가동)
     Comp->>Shadow: 2) 외부 CSS (<link>) 비동기 다운로드 요청 트리거
     Comp->>Shadow: 3) isLoading: true 분기 -> ProjectsLoadingView.render() 주입
-    Note over Shadow,Browser: ⚡️ 0ms 즉시 실행: 사용자는 빈 화면 대신 스켈레톤 카드를 봄!
+    Note over Browser,Shadow: ⚡️ 0ms 즉시 실행: 사용자는 빈 화면 대신 스켈레톤 카드를 봄!
     
     Note over Comp,Net: [단계 4: 비동기 데이터 요청 (Non-blocking)]
     Comp->>Comp: #handleMounted() -> mounted() 호출
-    Comp->>Net: #fetchRepositories() (fetch() 백그라운드 호출)
+    Comp->>Net: #fetchRepositories() — fetch() 백그라운드 호출
     Note over Comp,Net: 💡 API 응답을 기다리지 않고 브라우저는 화면을 계속 그림!
 
     Note over Browser,Shadow: [단계 5: CSS 다운로드 완료 & 페이드인]
     Browser-->>Shadow: ProjectsSection.css 다운로드 완료 (link.onload)
     Shadow->>Shadow: .component-container에 'styles-ready' 클래스 추가
-    Note over Shadow,User: 🎨 FOUC(날 것의 글자 깜빡임) 없이 부드러운 Fade-in 전환
+    Note over User,Shadow: 🎨 FOUC(날 것의 글자 깜빡임) 없이 부드러운 Fade-in 전환
 
-    Note over Net,Comp: [단계 6: 데이터 도착 & 최종 재렌더링]
+    Note over Comp,Net: [단계 6: 데이터 도착 & 최종 재렌더링]
     Net-->>Comp: GitHub API 200 OK 응답 (JSON 데이터 도착)
     Comp->>Comp: this.setState({ repos: data, isLoading: false })
     Comp->>Shadow: #renderWithStyle() 재호출
