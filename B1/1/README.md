@@ -1,87 +1,122 @@
-## 요구사항
+# 🚀 바닐라 자바스크립트 반응형 포트폴리오 웹사이트
 
-1. 반응형 -> 모바일 퍼스트
-   - 브레이크 포인트 : 768px (태블릿), 1024px (데스크탑)
-   - 모바일에서는 햄버거 메뉴로 네비게이션을 보여줌 (`classList.toggle('active')` 활용)
-2. 특정 섹션을 포함되어야함 (Hero, About, Skills, Projects, Contact, Footer)
-   - Hero (인사말, CTA 버튼)
-     - 타자기처럼 한 글자씩 나타나는 효과를 구현
-   - About (자기소개, 프로필 이미지)
-   - Skills (기술 스택 목록)
-   - Projects (GitHub API 연동 카드)
-   - Contact (문의 폼)
-     - 이름, 이메일, 메시지
-     - 필수값 검증 (빈 필드 금지)
-     - 이메일 형식 검증
-     - 에러메시지 입력 필드 근처에 표시
-     - 제출 시 `event.preventDefault()`로 기본 제출 동작을 막아야함
-     - 제출 성공 시 success 메세지 출력
-   - Footer (저작권, 소셜 링크)
-3. 다크모드 토글
-   - 시스템 다크 모드 감지
-   - prefers-color-scheme 미디어 쿼리로 시스템 설정을 감지
-4. 햄버거 메뉴
-5. 부드러운 스크롤
-   - 네비게이션 메뉴 클릭 시 해당 섹션으로 부드럽게 이동한다.
-   - Intersection Observer 임계값(threshold)은 0.2 이상을 권장
-6. 스크롤 애니메이션
-7. Form 유효성 검사
-8. Github API로 저장소 목록을 가져와 Projects 섹션에 동적으로 렌더링
-   - `fetch` 사용
-   - `async/await` 활용
-   - `https://api.github.com/users/{본인아이디}/repos`
-   - try/catch로 에러를 처리
-   - 레이트 리밋 발생 시(403 응답) 에러 상태 UI가 표시되도록 처리
-9. 로딩/에러/빈 상태 표현
-   - 로딩 상태: 데이터 요청 중 스피너 또는 "로딩 중..." 텍스트
-   - 성공 상태: 카드 리스트 렌더링
-   - 에러 상태: "프로젝트를 불러올 수 없습니다" 메시지 + 재시도 버튼
-   - 빈 상태: "표시할 프로젝트가 없습니다" 메시지
-10. 다크모드 설정이 로컬 스토리지에 저장되어 새로고침 후에도 유지되어야함
-11. Github Pages로 배포하여 외부접속가능 URL을 생성해야함
-12. 최소 폴더구조
-    - index.html (메인페이지)
-    - css/style.css (스타일시트)
-      - :root CSS 변수로 색상, 폰트, 간격 정의
-      - 다크모드용 CSS 변수 정의 (`[data-theme="dark]`)
-      - 네비게이션 Flexbox 사용 (로그 | 메뉴)
-      - Projects 카드 Grid 사용 (`auto-fit`, `minmax`로 반응형)
-    - js/ (Javascript 파일)
-      - js 파일 `defer` 속성으로 연결 -`var` 사용금지
-      - `onclick` 대신 `addEventListener` 사용
-      - `querySelector`, `querySelectorAll`사용
-      - `textContent`, `innerHTML` 사용
-      - `classList.add`, `remove`, `toggle` 로 클래스 조작 ???
-      - `click`, `submit`, `scroll`, `input` 이벤트 사용
-      - `event.preventDefault()` 사용
-    - images/ (이미지 파일)
-13. Live Server로 실시간 개발 환경을 구성
-14. 시맨틱 태그 사용해야함 (head, nav, main, section, article, footer 등등)
-15. 네비게이션
-    - 앵커 링크
-    - 스크롤 60px 이상에서 네비게이션 배경색이 변경
-16. 이미지에 alt 속성 작성
-17. 폼
-    - label 태그 올바르게 연결 (for-id 매칭)
-    - 실제 전송 -> Formspree 또는 EmailJS를 연동하여 실제 이메일을 전송
-18. 버튼/카드 `hover + transition`
-19. 카드에 `box-shadow` 적용
-20. 스크롤 탑 버튼
-    - 스크롤 300px 이상에서 버튼 나타나도록
-21. 화살표 함수 적절히 사용
-22. 템플릿 리터럴로 HTML 동적 생성
-23. 구조분해 할당 적절히 사용
-24. 배열 메서드 활용
-    - `map` : GitHub 데이터를 HTML 카드로 변환
-    - `filter` : 특정 조건의 프로젝트만 표시 -> GitHub 프로젝트를 언어별로 필터링하는 버튼
-    - `forEach` :배열 순회
-25. 인라인 스타일(style="...") 사용 금지
+외부 라이브러리(React, Vue, jQuery 등) 없이 **순수 HTML5, CSS3, 모던 JavaScript(ES6+) 및 웹 표준 Web Components(Custom Elements & Shadow DOM)**만을 사용하여 구축한 반응형 포트폴리오 웹사이트입니다.
 
-## 설명가능한 목표
+"사용자 이벤트 → 상태 변경 → DOM 업데이트"로 이어지는 프론트엔드 핵심 렌더링 파이프라인을 직접 체득하고, GitHub REST API 연동을 통해 로딩/성공/에러/빈 상태의 비동기 UI를 구현했습니다.
 
-- HTML에서 시맨틱 태그를 왜 사용하는지 또한 본인이 어떤 기준으로 구조를 설계했는지 설명할 수 있다.
-- CSS에서 Flexbox와 Grid의 차이, 그리고 언제 각각을 선택해야 하는지 설명할 수 있다.
-- querySelector로 DOM을 선택하고, addEventListener로 이벤트를 연결하는 흐름을 설명할 수 있다.
-- 화살표 함수, 구조분해 할당, 배열 메서드(map/filter)가 왜 필요하고 어떻게 사용하는지 설명할 수 있다.
-- fetch와 async/await로 비동기 데이터를 가져오고, 로딩/성공/실패 상태를 UI로 어떻게 표현했는지 설명할 수 있다.
-- "하나의 기능"을 만들기 위해 이벤트 → 상태 변경 → DOM 업데이트가 어떻게 연결되는지 설명할 수 있다. (React의 상태-렌더링 흐름의 기초)
+---
+
+## 🌐 1. 배포 및 저장소 정보
+
+- **배포 사이트 URL (GitHub Pages)**: [https://yoonsik-shin.github.io/codyssey-mission/B1/1/](https://yoonsik-shin.github.io/codyssey-mission/B1/1/)
+- **GitHub 저장소 URL**: [https://github.com/Yoonsik-Shin/codyssey-mission](https://github.com/Yoonsik-Shin/codyssey-mission)
+
+---
+
+## 📸 2. 프로젝트 스크린샷
+
+| 1. 데스크톱 라이트 모드 | 2. 데스크톱 다크 모드 |
+| :---: | :---: |
+| ![데스크톱 화면](./images/screenshot-desktop.png) | ![다크모드 화면](./images/screenshot-darkmode.png) |
+
+| 3. 모바일 반응형 화면 |
+| :---: |
+| <img src="./images/screenshot-mobile.png" width="320" alt="모바일 화면" /> |
+
+---
+
+## 🛠️ 3. 기술 스택 (Tech Stack)
+
+- **언어 및 표준**: HTML5 (시맨틱 마크업), CSS3 (CSS Variables, Flexbox, Grid), Modern JavaScript (ES6+ Modules)
+- **컴포넌트 아키텍처**: Web Components (`Custom Elements`, `Shadow DOM`, `BaseComponent`)
+- **브라우저 API**: `IntersectionObserver` (스크롤 애니메이션), `matchMedia` (OS 다크모드 감지), `Fetch API` (비동기 통신), `localStorage` & `sessionStorage` (영속성 및 캐싱)
+- **배포 환경**: GitHub Pages (정적 호스팅)
+
+---
+
+## ✨ 4. 주요 기능 및 인터랙션
+
+1. **모바일 퍼스트 반응형 레이아웃**:
+   - 뷰포트에 따른 유연한 그리드 레이아웃 (모바일 `< 768px`, 태블릿 `768px ~ 1023px`, 데스크톱 `≥ 1024px`)
+   - 모바일 환경 전용 햄버거 토글 메뉴 및 네비게이션 드로어
+2. **다크 모드 시스템**:
+   - `prefers-color-scheme` OS 시스템 테마 자동 감지 및 실시간 변경 리스너
+   - `localStorage` 테마 영속성(새로고침 후에도 유지)
+3. **Hero 섹션 타자기 애니메이션**:
+   - 한 글자씩 타이핑 및 백스페이스 효과를 반복하는 Typewriter Effect (언마운트 시 메모리 누수 방지 타이머 해제)
+4. **GitHub API 동적 연동 및 다중 상태 UI (Projects)**:
+   - 본인 저장소 목록 동적 렌더링 (`stargazers_count`, 주 언어, 설명 등)
+   - **4가지 상태 표현**: 로딩(스켈레톤 쉬머/스피너), 성공(카드 그리드), 에러(403 레이트 리밋 방어 및 [다시 시도] 버튼), 빈 상태
+   - `sessionStorage` 5분 만료 캐시 패턴 적용으로 불필요한 API 호출 방지
+   - 저장소 주 언어별 동적 필터링 버튼 (`map`, `filter` 활용)
+5. **Contact 폼 실시간 유효성 검증**:
+   - `event.preventDefault()` 기반 폼 제출 인터셉트
+   - 필수 입력값 검증, 이메일 정규표현식 검증, 실시간 입력 에러 클리어
+   - 제출 성공 시 인터랙티브 성공 피드백 카드 노출
+6. **스크롤 효과 & 접근성**:
+   - 60px 이상 스크롤 시 글래스모피즘(블러) 헤더 스타일 전환
+   - 300px 이상 스크롤 시 플로팅 상단 이동(Scroll To Top) 버튼 노출
+   - `IntersectionObserver` 기반 뷰포트 진입 페이드인 애니메이션 (`threshold: 0.25`)
+   - `for`-`id` 라벨 1:1 매칭, 스크린 리더용 `alt` 속성 완비
+7. **스크립트 로딩 최적화**:
+   - `<script type="module" defer src="./js/main.js"></script>`로 파서 블로킹 방지 및 DOM 완성 후 안전한 초기화 보장
+
+---
+
+## 📚 5. 상세 아키텍처 및 학습 문서
+
+프로젝트 구현 상세 원리와 심화 학습 내용은 `docs/` 폴더 내 문서에 정리되어 있습니다:
+
+- [1. 웹 컴포넌트 아키텍처 및 상태 관리](./docs/01_Web_Components.md)
+- [2. 시맨틱 HTML 마크업과 웹 접근성](./docs/02_Semantic_HTML.md)
+- [3. 모바일 퍼스트 CSS와 테마 시스템](./docs/03_CSS_and_Theming.md)
+- [4. JavaScript 및 브라우저 API (스크립트 defer 전략 포함)](./docs/04_Browser_APIs_and_JS.md)
+- [5. 요구사항 구현 체크리스트 (25개 항목 100% 달성)](./docs/05_Requirements_Checklist.md)
+
+---
+
+## 📋 6. 요구사항 검증 요약
+
+<details>
+<summary><b>과제 요구사항 전체 체크리스트 펼쳐보기</b></summary>
+
+| 번호 | 요구사항 | 구현 내용 및 세부 사항 | 상태 |
+| :--- | :--- | :--- | :---: |
+| **1** | **반응형 웹 (모바일 퍼스트)** | 모바일 퍼스트 기준 미디어 쿼리 (`768px`, `1024px`), 햄버거 메뉴 토글 | ✅ |
+| **2** | **필수 섹션 포함** | Hero, About, Skills, Projects, Contact, Footer 6개 섹션 완비 | ✅ |
+| **3** | **다크모드 토글** | 시스템 다크 모드 감지 (`prefers-color-scheme`) 및 토글 버튼 | ✅ |
+| **4** | **햄버거 메뉴** | 모바일 전용 토글 버튼 및 메뉴 항목 클릭 시 자동 닫힘 | ✅ |
+| **5** | **부드러운 스크롤** | `scroll-behavior: smooth`, Intersection Observer 기반 활성 메뉴 연동 | ✅ |
+| **6** | **스크롤 애니메이션** | Intersection Observer (`threshold: 0.25`) 뷰포트 감지 페이드인 | ✅ |
+| **7** | **Form 유효성 검사** | 필수값, 이메일 정규식, 실시간 에러 표시, 제출 성공 피드백 | ✅ |
+| **8** | **GitHub API 동적 연동** | `fetch`, `async/await`, Rate Limit(403) 예외 처리, 5분 세션 캐싱 | ✅ |
+| **9** | **UI 4가지 상태 표현** | 로딩(스켈레톤/스피너), 성공, 에러(재시도 버튼), 빈 상태 | ✅ |
+| **10** | **테마 로컬스토리지 저장** | 새로고침 후에도 사용자 테마 설정 영구 유지 | ✅ |
+| **11** | **GitHub Pages 배포** | [배포 URL](https://yoonsik-shin.github.io/codyssey-mission/B1/1/)에서 모든 기능 정상 동작 | ✅ |
+| **12** | **최소 폴더 구조 & 스타일 규칙** | `index.html`, `css/`, `js/`, `images/` 분리, `defer` 명시, `:root` 변수 | ✅ |
+| **13** | **Live Server 개발 환경** | VS Code Live Server 등 정적 서버 환경 완벽 지원 | ✅ |
+| **14** | **시맨틱 태그 활용** | `<header>`, `<nav>`, `<main>`, `<section>`, `<article>`, `<footer>` 적용 | ✅ |
+| **15** | **네비게이션 배경 전환** | 스크롤 60px 초과 시 헤더 배경 블러 및 테두리 효과 | ✅ |
+| **16** | **이미지 alt 속성** | 모든 이미지 태그에 설명적인 `alt` 속성 기재 | ✅ |
+| **17** | **폼 접근성 & 기본 동작 방지** | `<label for="...">` 매칭 및 `event.preventDefault()` 기본 동작 차단 | ✅ |
+| **18** | **호버 및 트랜지션** | 버튼/카드 `hover` 가상 클래스 및 `transition` 애니메이션 | ✅ |
+| **19** | **카드 그림자** | 일관된 `box-shadow` 및 호버 시 깊이감 전환 | ✅ |
+| **20** | **스크롤 탑 버튼** | 스크롤 300px 초과 시 플로팅 버튼 노출 및 상단 부드러운 이동 | ✅ |
+| **21** | **화살표 함수 활용** | 전반적인 콜백 함수 및 내부 메서드에 ES6 화살표 함수 적용 | ✅ |
+| **22** | **템플릿 리터럴 활용** | 백틱(`` ` ``)을 이용한 동적 HTML 마크업 렌더링 | ✅ |
+| **23** | **구조분해 할당 활용** | 상태 객체 및 파라미터 구조분해 할당 적용 | ✅ |
+| **24** | **배열 메서드 활용** | `map`(카드 렌더링), `filter`(언어별 필터), `forEach`(DOM 이벤트 순회) | ✅ |
+| **25** | **인라인 스타일 배제** | 모든 스타일을 외부 CSS 파일로 완벽히 분리 | ✅ |
+
+</details>
+
+---
+
+## 🎯 7. 설명 가능한 학습 목표
+
+- **시맨틱 태그 설계 기준**: 단순한 구역 분할(`div`)을 지양하고, 문서의 의미론적 계층 구조(헤더, 네비게이션, 본문 구역, 독립적인 카드 아티클, 푸터)를 명확히 설계하여 웹 접근성(A11y)과 검색 엔진 최적화(SEO)를 달성한 기준을 설명할 수 있습니다.
+- **Flexbox vs Grid 차이와 선택 기준**: 1차원 흐름 배치(네비게이션 바, 폼 입력 줄바꿈)에는 `Flexbox`를, 2차원 반응형 그리드(`repeat(auto-fit, minmax(...))` 기반의 프로젝트 카드 배치)에는 `Grid`를 적용한 설계 기준을 설명할 수 있습니다.
+- **DOM 탐색과 이벤트 리스너 흐름**: 인라인 이벤트 핸들러 대신 `querySelector`로 타겟을 명확히 지정하고 `addEventListener`를 통해 관심사를 분리하는 바닐라 자바스크립트 이벤트 위임 및 바인딩 흐름을 설명할 수 있습니다.
+- **모던 JS 문법과 배열 고차 함수**: 가독성을 높이는 화살표 함수, 불필요한 중복을 줄이는 구조분해 할당, 그리고 원본 데이터를 변경하지 않고 선언적으로 변환/선별하는 `map`, `filter`, `forEach`의 동작 원리를 설명할 수 있습니다.
+- **비동기 API와 상태별 UI 피드백**: `fetch`와 `async/await`를 통해 비동기 데이터를 가져오며, 네트워크 지연(로딩), 호출 한도 초과(403 에러 및 재시도), 데이터 부재(빈 상태), 정상 응답(성공 렌더링)을 사용자에게 시각적으로 전달하는 상태 주도 렌더링(State-driven Rendering)을 설명할 수 있습니다.
+- **이벤트 → 상태 → 렌더링 파이프라인**: "사용자 인터랙션(입력/클릭) 발생 → 컴포넌트 내부 State 업데이트(`setState`) → 변경된 State를 기반으로 필요한 DOM 템플릿 재렌더링"으로 이어지는 데이터 흐름(React/Vue의 핵심 패러다임)을 바닐라 자바스크립트로 구현한 원리를 설명할 수 있습니다.
