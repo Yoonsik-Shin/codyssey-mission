@@ -216,8 +216,8 @@ sequenceDiagram
     Note over Browser,Shadow: ⚡️ 0ms 즉시 실행: 사용자는 빈 화면 대신 스켈레톤 카드를 봄!
     
     Note over Comp,Net: [단계 4: 비동기 데이터 요청 (Non-blocking)]
-    Comp->>Comp: #handleMounted() -> mounted() 호출
-    Comp->>Net: #fetchRepositories() — fetch() 백그라운드 호출
+    Comp->>Comp: mounted() 진입
+    Comp->>Net: fetch() API 요청 (백그라운드)
     Note over Comp,Net: 💡 API 응답을 기다리지 않고 브라우저는 화면을 계속 그림!
 
     Note over Browser,Shadow: [단계 5: CSS 다운로드 완료 & 페이드인]
