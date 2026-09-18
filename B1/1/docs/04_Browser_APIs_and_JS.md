@@ -9,9 +9,10 @@
 기존 `window.addEventListener('scroll')` 방식은 스크롤할 때마다 수백 번씩 함수가 실행되어 메인 스레드 성능을 저하시킵니다. 반면 **Intersection Observer API**는 브라우저가 화면 교차 여부를 비동기적으로 효율적으로 감지합니다.
 
 ### 구현 원리
+
 ```javascript
 const observerOptions = {
-  root: null,      // 뷰포트 기준
+  root: null, // 뷰포트 기준
   threshold: 0.25, // 요소의 25% 이상이 화면에 보일 때 트리거
 };
 
@@ -43,12 +44,14 @@ document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
 
 ```javascript
 // 시스템 설정 실시간 감지 리스너
-window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-  // 사용자가 수동으로 버튼을 누른 적이 없을 때만 OS 설정에 맞춰 자동 변경
-  if (!localStorage.getItem("portfolio_theme")) {
-    applyTheme(e.matches ? "dark" : "light");
-  }
-});
+window
+  .matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", (e) => {
+    // 사용자가 수동으로 버튼을 누른 적이 없을 때만 OS 설정에 맞춰 자동 변경
+    if (!localStorage.getItem("portfolio_theme")) {
+      applyTheme(e.matches ? "dark" : "light");
+    }
+  });
 ```
 
 ---
@@ -56,10 +59,12 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e)
 ## 3. GitHub API 연동과 Rate Limit 방어 (캐싱 전략)
 
 ### GitHub API 비인증 호출의 제약
+
 - 인증 토큰 없이 호출하는 공개 API는 **IP당 시간당 60회**로 엄격히 제한됩니다.
 - 개발 중 페이지를 몇 번 새로고침하면 금방 `403 Forbidden` 에러가 발생합니다.
 
 ### 해결책: `sessionStorage` 5분 캐시 패턴
+
 ```javascript
 const CACHE_KEY = `github_repos_${username}`;
 const CACHE_TIME_KEY = `${CACHE_KEY}_time`;
@@ -69,13 +74,19 @@ const CACHE_EXPIRE = 1000 * 60 * 5; // 5분
 const cachedData = sessionStorage.getItem(CACHE_KEY);
 const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
 
-if (cachedData && cachedTime && (Date.now() - Number(cachedTime) < CACHE_EXPIRE)) {
+if (
+  cachedData &&
+  cachedTime &&
+  Date.now() - Number(cachedTime) < CACHE_EXPIRE
+) {
   this.setState({ repos: JSON.parse(cachedData) });
   return;
 }
 
 // 2. 캐시 만료 시에만 실제 API fetch 수행
-const res = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=12`);
+const res = await fetch(
+  `https://api.github.com/users/${username}/repos?sort=updated&per_page=12`,
+);
 if (!res.ok) {
   if (res.status === 403) throw new Error("API 요청 횟수를 초과했습니다.");
   throw new Error("저장소를 불러오지 못했습니다.");
@@ -92,6 +103,7 @@ sessionStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
 문자열을 한 글자씩 출력하고 삭제하는 애니메이션을 재귀 `setTimeout`으로 구현했습니다.
 
 ### ⭐️ 메모리 누수(Memory Leak) 방지
+
 컴포넌트가 화면에서 사라졌는데도 `setTimeout`이 계속 돌면 백그라운드 자원을 낭비하게 됩니다. 따라서 `unmounted()` 라이프사이클에서 타이머를 반드시 해제해야 합니다.
 
 ```javascript
