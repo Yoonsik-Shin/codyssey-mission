@@ -1,136 +1,11 @@
 import { BaseComponent } from "./BaseComponent.js";
 
-export class ProjectsSection extends BaseComponent {
-  get cssPath() {
-    return BaseComponent.resolveCss("ProjectsSection.css");
-  }
-
-  constructor() {
-    super();
-    this.state = {
-      ...this.state,
-      repos: [],
-      languages: ["All"],
-      selectedLanguage: "All",
-    };
-  }
-
-  // 캐시 설정 상수
-  static #CACHE_EXPIRE = 1000 * 60 * 5; // 5분 캐시
-
-  async mounted() {
-    await this.#fetchRepositories();
-  }
-
-  // GitHub 저장소 데이터 호출
-  async #fetchRepositories() {
-    const username = this.getAttribute("username") || "Yoonsik-Shin";
-    const CACHE_KEY = `github_repos_${username}`;
-    const CACHE_TIME_KEY = `${CACHE_KEY}_time`;
-
-    // 1. 세션 캐시 확인
-    const cachedData = sessionStorage.getItem(CACHE_KEY);
-    const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
-
-    if (
-      cachedData &&
-      cachedTime &&
-      Date.now() - Number(cachedTime) < ProjectsSection.#CACHE_EXPIRE
-    ) {
-      const repos = JSON.parse(cachedData);
-      this.#updateRepoState(repos);
-      return;
-    }
-
-    // 2. GitHub API 호출 (지수 백오프 재시도 전략 적용)
-    try {
-      const url = `https://api.github.com/users/${username}/repos?sort=updated&per_page=12`;
-      const res = await this.#fetchWithRetry(url, 2, 1000);
-
-      if (!res.ok) {
-        if (res.status === 403) {
-          throw new Error(
-            "GitHub API 요청 횟수(60회/시간)를 초과했습니다. 잠시 후 다시 시도해주세요.",
-          );
-        }
-        throw new Error(
-          `저장소 목록을 불러오지 못했습니다. (상태 코드: ${res.status})`,
-        );
-      }
-
-      const data = await res.json();
-      const ownRepos = data.filter((repo) => !repo.fork);
-
-      // 캐시 저장
-      sessionStorage.setItem(CACHE_KEY, JSON.stringify(ownRepos));
-      sessionStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
-
-      this.#updateRepoState(ownRepos);
-    } catch (err) {
-      console.error("[ProjectsSection] API 에러:", err);
-      throw err; // BaseComponent error boundary가 캐치
-    }
-  }
-
-  // 💡 네트워크 재시도 전략: 지수 백오프 (Exponential Backoff)
-  async #fetchWithRetry(url, retries = 2, delay = 1000) {
-    try {
-      return await fetch(url);
-    } catch (error) {
-      if (retries <= 0) throw error;
-      console.warn(`[ProjectsSection] 일시적 네트워크 오류. ${delay}ms 후 재시도... (남은 재시도: ${retries}회)`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      return this.#fetchWithRetry(url, retries - 1, delay * 2);
-    }
-  }
-
-  // 메서드: 상태 업데이트
-  #updateRepoState(repos) {
-    const langs = [
-      "All",
-      ...new Set(repos.map((r) => r.language).filter(Boolean)),
-    ];
-
-    this.setState({
-      repos,
-      languages: langs,
-      selectedLanguage: "All",
-    });
-  }
-
-  setEvents() {
-    // 1. 이벤트 위임(Event Delegation) 패턴 적용
-    // 버튼마다 일일이 addEventListener를 등록하지 않고 부모 컨테이너(.filter-group)에서 한 번만 처리
-    const filterGroup = this.shadowRoot.querySelector(".filter-group");
-    if (filterGroup) {
-      filterGroup.addEventListener("click", (e) => {
-        const btn = e.target.closest(".filter-btn");
-        if (btn) {
-          const lang = btn.getAttribute("data-lang");
-          if (lang && lang !== this.state.selectedLanguage) {
-            this.setState({ selectedLanguage: lang });
-          }
-        }
-      });
-    }
-
-    // 2. 재시도 버튼 이벤트 (에러 상태일 때)
-    const retryBtn = this.shadowRoot.querySelector("#retry-btn");
-    if (retryBtn) {
-      retryBtn.addEventListener("click", async () => {
-        sessionStorage.clear();
-        this.setState({ isLoading: true, error: null });
-        try {
-          await this.#fetchRepositories();
-          this.setState({ isLoading: false });
-        } catch (err) {
-          this.setState({ isLoading: false, error: err });
-        }
-      });
-    }
-  }
-
-  renderLoading() {
+/**
+ * [Internal View Helper 1] 로딩 상태 뷰
+ * - 카드 6개 스켈레톤 그리드 템플릿 전담
+ */
+class ProjectsLoadingView {
+  static render() {
     return `
       <section class="projects-container">
         <div class="projects-header">
@@ -159,25 +34,39 @@ export class ProjectsSection extends BaseComponent {
       </section>
     `;
   }
+}
 
-  renderError(error) {
+/**
+ * [Internal View Helper 2] 에러 상태 뷰
+ * - 에러 메시지 템플릿 및 [다시 시도] 버튼 바인딩 전담
+ */
+class ProjectsErrorView {
+  static render(error) {
     return `
       <section class="projects-container">
         <h2 class="section-title">Projects</h2>
         <div class="projects-error-box">
           <span class="error-icon">⚠️</span>
           <p class="error-message">프로젝트를 불러올 수 없습니다.</p>
-          <small class="error-detail">${error.message || error}</small>
+          <small class="error-detail">${error?.message || error}</small>
           <button id="retry-btn" class="retry-btn">다시 시도</button>
         </div>
       </section>
     `;
   }
 
-  render() {
-    const { repos, languages, selectedLanguage } = this.state;
+  static bindEvents(shadowRoot, onRetry) {
+    const retryBtn = shadowRoot.querySelector("#retry-btn");
+    retryBtn?.addEventListener("click", onRetry);
+  }
+}
 
-    // 언어별 필터링
+/**
+ * [Internal View Helper 3] 프로젝트 그리드 & 필터 뷰
+ * - 언어 필터 버튼군 및 성공/빈 상태 프로젝트 카드 그리드 렌더링 + 이벤트 위임 바인딩
+ */
+class ProjectsGridView {
+  static render(repos, languages, selectedLanguage) {
     const filteredRepos =
       selectedLanguage === "All"
         ? repos
@@ -252,6 +141,156 @@ export class ProjectsSection extends BaseComponent {
         }
       </section>
     `;
+  }
+
+  static bindEvents(shadowRoot, onSelectLanguage) {
+    const filterGroup = shadowRoot.querySelector(".filter-group");
+    if (filterGroup) {
+      filterGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest(".filter-btn");
+        if (btn) {
+          const lang = btn.getAttribute("data-lang");
+          if (lang) {
+            onSelectLanguage(lang);
+          }
+        }
+      });
+    }
+  }
+}
+
+/**
+ * [Main Controller Component] ProjectsSection
+ * - 비동기 API 통신, 5분 세션 캐싱, 지수 백오프 및 컴포넌트 상태 관리 총괄
+ */
+export class ProjectsSection extends BaseComponent {
+  get cssPath() {
+    return BaseComponent.resolveCss("ProjectsSection.css");
+  }
+
+  constructor() {
+    super();
+    this.state = {
+      ...this.state,
+      repos: [],
+      languages: ["All"],
+      selectedLanguage: "All",
+    };
+  }
+
+  static #CACHE_EXPIRE = 1000 * 60 * 5; // 5분 캐시
+
+  async mounted() {
+    await this.#fetchRepositories();
+  }
+
+  async #fetchRepositories() {
+    const username = this.getAttribute("username") || "Yoonsik-Shin";
+    const CACHE_KEY = `github_repos_${username}`;
+    const CACHE_TIME_KEY = `${CACHE_KEY}_time`;
+
+    // 1. 세션 캐시 확인
+    const cachedData = sessionStorage.getItem(CACHE_KEY);
+    const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
+
+    if (
+      cachedData &&
+      cachedTime &&
+      Date.now() - Number(cachedTime) < ProjectsSection.#CACHE_EXPIRE
+    ) {
+      const repos = JSON.parse(cachedData);
+      this.#updateRepoState(repos);
+      return;
+    }
+
+    // 2. GitHub API 호출 (지수 백오프 재시도 전략 적용)
+    try {
+      const url = `https://api.github.com/users/${username}/repos?sort=updated&per_page=12`;
+      const res = await this.#fetchWithRetry(url, 2, 1000);
+
+      if (!res.ok) {
+        if (res.status === 403) {
+          throw new Error(
+            "GitHub API 요청 횟수(60회/시간)를 초과했습니다. 잠시 후 다시 시도해주세요.",
+          );
+        }
+        throw new Error(
+          `저장소 목록을 불러오지 못했습니다. (상태 코드: ${res.status})`,
+        );
+      }
+
+      const data = await res.json();
+      const ownRepos = data.filter((repo) => !repo.fork);
+
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(ownRepos));
+      sessionStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
+
+      this.#updateRepoState(ownRepos);
+    } catch (err) {
+      console.error("[ProjectsSection] API 에러:", err);
+      throw err;
+    }
+  }
+
+  async #fetchWithRetry(url, retries = 2, delay = 1000) {
+    try {
+      return await fetch(url);
+    } catch (error) {
+      if (retries <= 0) throw error;
+      console.warn(
+        `[ProjectsSection] 일시적 네트워크 오류. ${delay}ms 후 재시도... (남은 재시도: ${retries}회)`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return this.#fetchWithRetry(url, retries - 1, delay * 2);
+    }
+  }
+
+  #updateRepoState(repos) {
+    const langs = [
+      "All",
+      ...new Set(repos.map((r) => r.language).filter(Boolean)),
+    ];
+
+    this.setState({
+      repos,
+      languages: langs,
+      selectedLanguage: "All",
+    });
+  }
+
+  setEvents() {
+    if (this.state.error) {
+      ProjectsErrorView.bindEvents(this.shadowRoot, async () => {
+        sessionStorage.clear();
+        this.setState({ isLoading: true, error: null });
+        try {
+          await this.#fetchRepositories();
+          this.setState({ isLoading: false });
+        } catch (err) {
+          this.setState({ isLoading: false, error: err });
+        }
+      });
+      return;
+    }
+
+    ProjectsGridView.bindEvents(this.shadowRoot, (lang) => {
+      if (lang !== this.state.selectedLanguage) {
+        this.setState({ selectedLanguage: lang });
+      }
+    });
+  }
+
+  renderLoading() {
+    return ProjectsLoadingView.render();
+  }
+
+  renderError(error) {
+    return ProjectsErrorView.render(error);
+  }
+
+  render() {
+    const { repos, languages, selectedLanguage } = this.state;
+    return ProjectsGridView.render(repos, languages, selectedLanguage);
   }
 }
 
