@@ -127,6 +127,9 @@ export class ContactSection extends BaseComponent {
     });
   }
 
+  // 기본 Formspree 엔드포인트 상수
+  static #DEFAULT_ENDPOINT = "https://formspree.io/f/myezyrkk";
+
   // 폼 제출 핸들러
   async #handleSubmit(event) {
     event.preventDefault(); // 기본 폼 제출 동작 방지 (요구사항 17)
@@ -143,9 +146,13 @@ export class ContactSection extends BaseComponent {
     this.#applyErrorsToDom(this.state.errors);
     this.setState({ isSubmitting: true });
 
+    // HTML 속성(endpoint)에서 주입받거나 기본값 사용 (하드코딩 분리)
+    const endpoint =
+      this.getAttribute("endpoint") || ContactSection.#DEFAULT_ENDPOINT;
+
     try {
       // Formspree 실제 이메일 전송 API 호출 (보너스 요구사항 충족)
-      const res = await fetch("https://formspree.io/f/myezyrkk", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
