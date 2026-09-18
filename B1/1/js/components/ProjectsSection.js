@@ -15,23 +15,26 @@ export class ProjectsSection extends BaseComponent {
     };
   }
 
+  // 🔒 Private 캐시 설정 상수
+  static #CACHE_EXPIRE = 1000 * 60 * 5; // 5분 캐시
+
   async mounted() {
-    await this.fetchRepositories();
+    await this.#fetchRepositories();
   }
 
-  async fetchRepositories() {
+  // 🔒 Private 메서드: GitHub 저장소 데이터 호출
+  async #fetchRepositories() {
     const username = this.getAttribute("username") || "Yoonsik-Shin";
     const CACHE_KEY = `github_repos_${username}`;
     const CACHE_TIME_KEY = `${CACHE_KEY}_time`;
-    const CACHE_EXPIRE = 1000 * 60 * 5; // 5분 캐시
 
     // 1. 세션 캐시 확인
     const cachedData = sessionStorage.getItem(CACHE_KEY);
     const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
 
-    if (cachedData && cachedTime && Date.now() - Number(cachedTime) < CACHE_EXPIRE) {
+    if (cachedData && cachedTime && Date.now() - Number(cachedTime) < ProjectsSection.#CACHE_EXPIRE) {
       const repos = JSON.parse(cachedData);
-      this.updateRepoState(repos);
+      this.#updateRepoState(repos);
       return;
     }
 
@@ -55,14 +58,15 @@ export class ProjectsSection extends BaseComponent {
       sessionStorage.setItem(CACHE_KEY, JSON.stringify(ownRepos));
       sessionStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
 
-      this.updateRepoState(ownRepos);
+      this.#updateRepoState(ownRepos);
     } catch (err) {
       console.error("[ProjectsSection] API 에러:", err);
       throw err; // BaseComponent error boundary가 캐치
     }
   }
 
-  updateRepoState(repos) {
+  // 🔒 Private 메서드: 상태 업데이트
+  #updateRepoState(repos) {
     const langs = [
       "All",
       ...new Set(repos.map((r) => r.language).filter(Boolean)),
@@ -92,7 +96,7 @@ export class ProjectsSection extends BaseComponent {
         sessionStorage.clear();
         this.setState({ isLoading: true, error: null });
         try {
-          await this.fetchRepositories();
+          await this.#fetchRepositories();
           this.setState({ isLoading: false });
         } catch (err) {
           this.setState({ isLoading: false, error: err });
