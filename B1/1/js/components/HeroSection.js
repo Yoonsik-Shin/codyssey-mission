@@ -25,7 +25,7 @@ export class HeroSection extends BaseComponent {
   }
 
   mounted() {
-    this.type();
+    this.runTypewriterEffect();
   }
 
   unmounted() {
@@ -34,7 +34,7 @@ export class HeroSection extends BaseComponent {
     }
   }
 
-  type() {
+  runTypewriterEffect() {
     const textEl = this.shadowRoot.querySelector(".typewriter-text");
     if (!textEl) return;
 
@@ -59,7 +59,7 @@ export class HeroSection extends BaseComponent {
       speed = 400;
     }
 
-    this.timer = setTimeout(() => this.type(), speed);
+    this.timer = setTimeout(() => this.runTypewriterEffect(), speed);
   }
 
   setEvents() {
