@@ -17,3 +17,5 @@ tempCodeRunnerFile.py
 *.tmp
 *.bak
 logs/
+
+DS_Store

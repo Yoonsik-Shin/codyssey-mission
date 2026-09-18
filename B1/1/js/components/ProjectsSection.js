@@ -15,14 +15,14 @@ export class ProjectsSection extends BaseComponent {
     };
   }
 
-  // 🔒 Private 캐시 설정 상수
+  // 캐시 설정 상수
   static #CACHE_EXPIRE = 1000 * 60 * 5; // 5분 캐시
 
   async mounted() {
     await this.#fetchRepositories();
   }
 
-  // 🔒 Private 메서드: GitHub 저장소 데이터 호출
+  // GitHub 저장소 데이터 호출
   async #fetchRepositories() {
     const username = this.getAttribute("username") || "Yoonsik-Shin";
     const CACHE_KEY = `github_repos_${username}`;
@@ -32,7 +32,11 @@ export class ProjectsSection extends BaseComponent {
     const cachedData = sessionStorage.getItem(CACHE_KEY);
     const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
 
-    if (cachedData && cachedTime && Date.now() - Number(cachedTime) < ProjectsSection.#CACHE_EXPIRE) {
+    if (
+      cachedData &&
+      cachedTime &&
+      Date.now() - Number(cachedTime) < ProjectsSection.#CACHE_EXPIRE
+    ) {
       const repos = JSON.parse(cachedData);
       this.#updateRepoState(repos);
       return;
@@ -41,14 +45,18 @@ export class ProjectsSection extends BaseComponent {
     // 2. GitHub API 호출
     try {
       const res = await fetch(
-        `https://api.github.com/users/${username}/repos?sort=updated&per_page=12`
+        `https://api.github.com/users/${username}/repos?sort=updated&per_page=12`,
       );
 
       if (!res.ok) {
         if (res.status === 403) {
-          throw new Error("GitHub API 요청 횟수(60회/시간)를 초과했습니다. 잠시 후 다시 시도해주세요.");
+          throw new Error(
+            "GitHub API 요청 횟수(60회/시간)를 초과했습니다. 잠시 후 다시 시도해주세요.",
+          );
         }
-        throw new Error(`저장소 목록을 불러오지 못했습니다. (상태 코드: ${res.status})`);
+        throw new Error(
+          `저장소 목록을 불러오지 못했습니다. (상태 코드: ${res.status})`,
+        );
       }
 
       const data = await res.json();
@@ -65,7 +73,7 @@ export class ProjectsSection extends BaseComponent {
     }
   }
 
-  // 🔒 Private 메서드: 상태 업데이트
+  // 메서드: 상태 업데이트
   #updateRepoState(repos) {
     const langs = [
       "All",
@@ -150,7 +158,7 @@ export class ProjectsSection extends BaseComponent {
                 >
                   ${lang}
                 </button>
-              `
+              `,
                 )
                 .join("")}
             </div>
@@ -171,7 +179,13 @@ export class ProjectsSection extends BaseComponent {
           <div class="projects-grid">
             ${filteredRepos
               .map(
-                ({ name, html_url, description, language, stargazers_count }) => `
+                ({
+                  name,
+                  html_url,
+                  description,
+                  language,
+                  stargazers_count,
+                }) => `
               <a href="${html_url}" target="_blank" rel="noopener noreferrer" class="project-card">
                 <div class="card-header">
                   <h3 class="repo-name">${name}</h3>
@@ -183,7 +197,7 @@ export class ProjectsSection extends BaseComponent {
                   <span class="view-link">View Repo ↗</span>
                 </div>
               </a>
-            `
+            `,
               )
               .join("")}
           </div>
