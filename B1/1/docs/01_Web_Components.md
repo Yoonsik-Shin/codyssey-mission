@@ -77,25 +77,45 @@ export class BaseComponent extends HTMLElement {
       const result = this.mounted();
       if (result instanceof Promise) {
         this.setState({ isLoading: true, error: null });
-        await result;
-        this.setState({ isLoading: false });
-      }
-    } catch (err) {
-      this.setState({ isLoading: false, error: err });
+    await result;
+    this.setState({ isLoading: false });
+  }
+
+  // ⭐️ 성능 최적화: 스타일시트 최초 1회만 주입하여 FOUC 및 CSSOM 재파싱 방지
+  _ensureStyles() {
+    if (this._stylesInjected) return;
+    this._stylesInjected = true;
+
+    const baseLink = document.createElement("link");
+    baseLink.rel = "stylesheet";
+    baseLink.href = BaseComponent.resolveCss("BaseComponent.css");
+    this.shadowRoot.appendChild(baseLink);
+
+    if (this.cssPath) {
+      const childLink = document.createElement("link");
+      childLink.rel = "stylesheet";
+      childLink.href = this.cssPath;
+      this.shadowRoot.appendChild(childLink);
     }
+
+    const container = document.createElement("div");
+    container.className = "component-container";
+    this.shadowRoot.appendChild(container);
   }
 
   _renderWithStyle() {
+    this._ensureStyles();
+
     let html = "";
     if (this.state.error) html = this.renderError(this.state.error);
     else if (this.state.isLoading) html = this.renderLoading();
     else html = this.render();
 
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="${BaseComponent.resolveCss("BaseComponent.css")}">
-      ${this.cssPath ? `<link rel="stylesheet" href="${this.cssPath}">` : ""}
-      ${html}
-    `;
+    // 전체 ShadowRoot가 아닌 본문 컨테이너만 업데이트 (노드 파괴 방지)
+    const container = this.shadowRoot.querySelector(".component-container");
+    if (container) {
+      container.innerHTML = html;
+    }
 
     if (!this.state.isLoading && !this.state.error) {
       this.setEvents();

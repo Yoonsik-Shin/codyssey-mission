@@ -46,8 +46,8 @@
 | **4** | **햄버거 메뉴** | - 모바일 해상도에서 햄버거 토글 버튼 동작<br>- 메뉴 링크 클릭 시 모바일 메뉴 패널 자동 닫힘 처리 | ✅ | [`main.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/main.js)<br>[`style.css`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/css/style.css) |
 | **5** | **부드러운 스크롤 & 활성 메뉴** | - 네비게이션 앵커 링크 클릭 시 부드러운 스크롤 이동 (`html { scroll-behavior: smooth; }`)<br>- `IntersectionObserver` (임계값 `threshold: 0.3`)로 뷰포트 감지 후 현재 섹션 메뉴 활성화 (Scrollspy) | ✅ | [`main.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/main.js)<br>[`style.css`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/css/style.css) |
 | **6** | **스크롤 등장 애니메이션** | - `IntersectionObserver`로 섹션 등장 감지 후 `.active` 클래스 부여<br>- 페이드인 및 Y축 슬라이드 애니메이션 효과 | ✅ | [`main.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/main.js)<br>[`style.css`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/css/style.css) |
-| **15** | **네비게이션 스크롤 스타일 전환** | - 스크롤 60px 초과 시 헤더에 `.scrolled` 클래스 토글<br>- 배경색 반투명 블러(글래스모피즘) 및 하단 보더 생성 | ✅ | [`main.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/main.js)<br>[`style.css`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/css/style.css) |
-| **20** | **스크롤 탑 버튼** | - 스크롤 300px 초과 시 우하단 플로팅 버튼 표시<br>- 클릭 시 부드럽게 최상단으로 스크롤 이동 (`window.scrollTo({ top: 0, behavior: 'smooth' })`) | ✅ | [`main.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/main.js)<br>[`style.css`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/css/style.css) |
+| **15** | **네비게이션 스크롤 스타일 전환** | - 스크롤 60px 초과 시 헤더에 `.scrolled` 클래스 토글<br>- 배경색 반투명 블러(글래스모피즘) 및 하단 보더 생성<br>- `requestAnimationFrame` 쓰로틀링으로 초당 60fps 최적화 및 레이아웃 스래싱 방지 | ✅ | [`main.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/main.js)<br>[`style.css`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/css/style.css) |
+| **20** | **스크롤 탑 버튼** | - 스크롤 300px 초과 시 우하단 플로팅 버튼 표시<br>- 클릭 시 부드럽게 최상단으로 스크롤 이동 (`window.scrollTo({ top: 0, behavior: 'smooth' })`)<br>- `requestAnimationFrame` 쓰로틀링 기반 고성능 가시성 토글 | ✅ | [`main.js`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/js/main.js)<br>[`style.css`](file:///Users/shin-yoonsik/Desktop/codyssey/B1/1/css/style.css) |
 
 ---
 

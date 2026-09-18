@@ -32,6 +32,31 @@ const observer = new IntersectionObserver((entries) => {
 document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
 ```
 
+### ⭐️ 스크롤 이벤트 성능 최적화 (`requestAnimationFrame` & `passive`)
+
+단순 `scroll` 이벤트 리스너는 사용자가 빠르게 스크롤할 때 초당 수백 회 이상 트리거되어 메인 스레드를 차단하고 레이아웃 스래싱(Layout Thrashing)을 유발합니다. 이를 방어하기 위해 `requestAnimationFrame` 쓰로틀링과 `passive` 리스너를 적용했습니다.
+
+```javascript
+let ticking = false;
+
+window.addEventListener(
+  "scroll",
+  () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        // 60fps 디스플레이 주사율(약 16ms)에 맞춰 브라우저 렌더링 직전 1회만 계산
+        if (header) header.classList.toggle("scrolled", scrollY > 60);
+        if (scrollTopBtn) scrollTopBtn.classList.toggle("visible", scrollY > 300);
+        ticking = false;
+      });
+      ticking = true;
+    }
+  },
+  { passive: true }, // 기본 스크롤 동작 지연 방지
+);
+```
+
 ---
 
 ## 2. 다크 모드 영속성 전략 (`localStorage` + `matchMedia`)
@@ -126,6 +151,7 @@ unmounted() {
 2. **이메일 정규식 검증**: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
 3. **실시간 에러 클리어**: 사용자가 입력을 시작(`input` 이벤트)하면 빨간색 에러 메시지를 즉시 지워줌
 4. **접근성 매칭**: `<label for="email">`과 `<input id="email">`을 1:1 연결하여 라벨 클릭 시 해당 인풋에 포커스 이동
+5. **⭐️ 성능 최적화 (미세 DOM 업데이트)**: 유효성 검사 에러 시 `this.setState({ errors })`로 폼 전체 `innerHTML`을 파괴하지 않고, `#applyErrorsToDom()`을 통해 에러 텍스트 노드(`textContent`)와 `invalid` 클래스만 직접 업데이트하여 입력 포커스 유지 및 리플로우 최소화
 
 ---
 
