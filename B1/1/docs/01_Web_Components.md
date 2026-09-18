@@ -27,6 +27,15 @@
   - ❌ `customElements.define("herosection", HeroSection)` (에러)
   - ⭕ `customElements.define("hero-section", HeroSection)` (정상)
 
+### ③ 브라우저 엔진이 관리하는 라이프사이클 (`connectedCallback`의 호출 주체)
+
+커스텀 엘리먼트의 생명주기 메서드(`connectedCallback`, `disconnectedCallback` 등)를 **직접 호출하는 주체는 자바스크립트 코드가 아니라 "브라우저 엔진(DOM 렌더링 엔진 / HTML 파서)"**입니다.
+
+- **호출 시점**:
+  1. 커스텀 엘리먼트 노드가 실제 문서의 DOM 트리(`document`)에 연결(삽입)되는 순간
+  2. HTML 문서에 이미 선언되어 있던 태그가 `customElements.define()`을 통해 업그레이드 완료되는 순간
+- **원리**: 개발자가 `element.connectedCallback()`을 수동으로 실행하지 않아도, 브라우저가 DOM 삽입 생명주기 이벤트를 감지하여 자동으로 해당 인스턴스의 `connectedCallback()`을 트리거해 줍니다.
+
 ---
 
 ## 3. Shadow DOM과 스타일 캡슐화 (시각적 아키텍처)
@@ -198,8 +207,8 @@ sequenceDiagram
     Browser->>Comp: ⭐️ 커스텀 엘리먼트 업그레이드!<br/>new ProjectsSection() [constructor 실행]
     Note over Comp: this.state = { isLoading: true, repos: [] }<br/>attachShadow({ mode: 'open' })
 
-    Note over Comp,Shadow: [단계 3: 첫 번째 렌더링 (First Paint: 스켈레톤)]
-    Comp->>Comp: connectedCallback() 진입
+    Note over Browser,Comp: [단계 3: 첫 번째 렌더링 (First Paint: 스켈레톤)]
+    Browser->>Comp: DOM 연결/업그레이드 감지 ➔ connectedCallback() 호출
     Comp->>Shadow: #renderWithStyle() 호출
     Comp->>Shadow: 1) <style> 인라인 크리티컬 CSS 주입 (쉬머 애니메이션 즉각 가동)
     Comp->>Shadow: 2) 외부 CSS (<link>) 비동기 다운로드 요청 트리거
@@ -225,9 +234,23 @@ sequenceDiagram
     Note over Shadow,User: 🎉 스켈레톤이 실제 GitHub 프로젝트 카드들로 깔끔하게 교체 완료!
 ```
 
+### 2) 🎬 실제 화면 렌더링 라이프사이클 애니메이션 (GIF)
+
+스켈레톤 로딩부터 데이터 렌더링, 필터링 인터랙션, 에러 상태 복구까지의 실제 브라우저 화면 변화 과정입니다:
+
+![Rendering Lifecycle Animation](./images/rendering_lifecycle.gif)
+
+#### 📸 상태별 브라우저 캡처 화면
+
+| 1단계: 스켈레톤 로딩 (0ms) | 2단계: GitHub API 데이터 렌더링 완료 |
+| :---: | :---: |
+| ![1. Skeleton Loading](./images/step1_skeleton.png) | ![2. Success Grid](./images/step2_success.png) |
+| **3단계: 언어 필터 인터랙션 (TypeScript)** | **4단계: API 에러 발생 및 [다시 시도]** |
+| ![3. Filtered View](./images/step3_filtered.png) | ![4. Error Boundary](./images/step4_error.png) |
+
 ---
 
-### 2) 단계별 핵심 동작 요약표
+### 3) 단계별 핵심 동작 요약표
 
 | 단계 | 실행 시점 | 렌더링 주체 | 실제 화면에 그려지는 내용 (화면 상태) | 핵심 설계 의도 & 기술 포인트 |
 | :--- | :--- | :--- | :--- | :--- |
@@ -240,7 +263,7 @@ sequenceDiagram
 
 ---
 
-### 3) 만약 API에서 에러가 발생한다면? (에러 라이프사이클)
+### 4) 만약 API에서 에러가 발생한다면? (에러 라이프사이클)
 
 ```mermaid
 flowchart LR
