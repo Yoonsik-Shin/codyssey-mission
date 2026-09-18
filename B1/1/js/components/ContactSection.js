@@ -77,7 +77,10 @@ export class ContactSection extends BaseComponent {
     const errorEl = this.shadowRoot.querySelector(`#error-${fieldName}`);
     const inputEl = this.shadowRoot.querySelector(`#${fieldName}`);
     if (errorEl) errorEl.textContent = "";
-    if (inputEl) inputEl.classList.remove("invalid");
+    if (inputEl) {
+      inputEl.classList.remove("invalid");
+      inputEl.setAttribute("aria-invalid", "false");
+    }
   }
 
   // 폼 입력값 유효성 검증
@@ -117,16 +120,32 @@ export class ContactSection extends BaseComponent {
     return { isValid, errors };
   }
 
-  // 에러 메시지 돔 미세 업데이트 (전체 innerHTML 재파싱 방지)
+  // 에러 메시지 돔 미세 업데이트 및 접근성(A11y) 속성 바인딩
   #applyErrorsToDom(errors) {
+    let firstErrorField = null;
+
     ["name", "email", "message"].forEach((field) => {
       const errorEl = this.shadowRoot.querySelector(`#error-${field}`);
       const inputEl = this.shadowRoot.querySelector(`#${field}`);
-      if (errorEl) errorEl.textContent = errors[field] || "";
+      const hasError = Boolean(errors[field]);
+
+      if (errorEl) {
+        errorEl.textContent = errors[field] || "";
+      }
+
       if (inputEl) {
-        inputEl.classList.toggle("invalid", Boolean(errors[field]));
+        inputEl.classList.toggle("invalid", hasError);
+        inputEl.setAttribute("aria-invalid", hasError ? "true" : "false");
+        if (hasError && !firstErrorField) {
+          firstErrorField = inputEl;
+        }
       }
     });
+
+    // 💡 접근성: 오류가 발생한 첫 번째 입력창으로 키보드 포커스 자동 이동
+    if (firstErrorField) {
+      firstErrorField.focus();
+    }
   }
 
   // 기본 Formspree 엔드포인트 상수
@@ -215,9 +234,10 @@ export class ContactSection extends BaseComponent {
                   class="form-input ${errors.name ? "invalid" : ""}" 
                   placeholder="홍길동"
                   value="${formData.name}"
+                  aria-invalid="${errors.name ? "true" : "false"}"
                   required 
                 />
-                <span id="error-name" class="error-text">${errors.name}</span>
+                <span id="error-name" class="error-text" role="alert" aria-live="polite">${errors.name}</span>
               </div>
 
               <!-- 이메일 입력 필드 -->
@@ -232,9 +252,10 @@ export class ContactSection extends BaseComponent {
                   class="form-input ${errors.email ? "invalid" : ""}" 
                   placeholder="example@domain.com"
                   value="${formData.email}"
+                  aria-invalid="${errors.email ? "true" : "false"}"
                   required 
                 />
-                <span id="error-email" class="error-text">${errors.email}</span>
+                <span id="error-email" class="error-text" role="alert" aria-live="polite">${errors.email}</span>
               </div>
 
               <!-- 메시지 입력 필드 -->
@@ -248,9 +269,10 @@ export class ContactSection extends BaseComponent {
                   class="form-textarea ${errors.message ? "invalid" : ""}" 
                   rows="5" 
                   placeholder="궁금한 점이나 제안하고 싶으신 내용을 자유롭게 작성해주세요."
+                  aria-invalid="${errors.message ? "true" : "false"}"
                   required
                 >${formData.message}</textarea>
-                <span id="error-message" class="error-text">${errors.message}</span>
+                <span id="error-message" class="error-text" role="alert" aria-live="polite">${errors.message}</span>
               </div>
 
               <!-- 제출 버튼 -->

@@ -51,9 +51,20 @@ export class BaseComponent extends HTMLElement {
     }
   }
 
-  // 상태를 변경하고 화면을 다시 그리는 커스텀 메서드
+  // 상태를 변경하고 화면을 다시 그리는 커스텀 메서드 (디버그 모드 지원)
   setState(newState) {
+    const prevState = { ...this.state };
     this.state = { ...this.state, ...newState };
+
+    // 💡 디버그 모드: window.__DEBUG_COMPONENTS__ 가 true이거나 개별 컴포넌트에 debug 플래그가 있을 때 로깅
+    if (window.__DEBUG_COMPONENTS__ || this.debugState) {
+      console.groupCollapsed(`[State Change] <${this.tagName.toLowerCase()}>`);
+      console.log("%c이전 상태 (Prev):", "color: #94a3b8; font-weight: bold;", prevState);
+      console.log("%c변경 상태 (Diff):", "color: #3b82f6; font-weight: bold;", newState);
+      console.log("%c최종 상태 (Next):", "color: #10b981; font-weight: bold;", this.state);
+      console.groupEnd();
+    }
+
     this._renderWithStyle();
   }
 

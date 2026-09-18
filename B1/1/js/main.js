@@ -18,8 +18,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /**
  * 2. 다크 모드 컨트롤러 (요구사항 3, 10)
- * - 시스템 설정(prefers-color-scheme) 감지
- * - localStorage 영속성 유지
+ * - 테마 결정 우선순위:
+ *   1순위: localStorage에 저장된 사용자 명시적 선택 테마 (다크/라이트)
+ *   2순위: 시스템(OS) 설정 (prefers-color-scheme: dark)
+ *   3순위: 시스템 기본값 (light)
  */
 function initTheme() {
   const themeToggleBtn = document.querySelector("#theme-toggle");
@@ -50,7 +52,7 @@ function initTheme() {
     applyTheme(nextTheme);
   });
 
-  // 시스템 설정 실시간 변경 감지
+  // 시스템 설정 실시간 변경 감지 (사용자가 웹에서 수동 변경한 적 없을 때만 OS 설정 동기화)
   window
     .matchMedia("(prefers-color-scheme: dark)")
     .addEventListener("change", (e) => {
@@ -85,8 +87,9 @@ function initNavigation() {
 
 /**
  * 4. 스크롤 인터랙션 컨트롤러 (요구사항 15, 20)
- * - 60px 이상 스크롤 시 헤더 배경색 변경
- * - 300px 이상 스크롤 시 스크롤 탑 버튼 노출
+ * 💡 임계값(Threshold) 설계 기준:
+ * - 60px: 기본 헤더 높이(70px) 직전에 글래스모피즘(블러+경계선)으로 자연스럽게 전환
+ * - 300px: 사용자가 Hero 섹션을 완전히 벗어나 스크롤했을 때 비로소 상단 이동 버튼 노출
  */
 function initScrollEffects() {
   const header = document.querySelector("#main-header");

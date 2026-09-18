@@ -42,11 +42,10 @@ export class ProjectsSection extends BaseComponent {
       return;
     }
 
-    // 2. GitHub API 호출
+    // 2. GitHub API 호출 (지수 백오프 재시도 전략 적용)
     try {
-      const res = await fetch(
-        `https://api.github.com/users/${username}/repos?sort=updated&per_page=12`,
-      );
+      const url = `https://api.github.com/users/${username}/repos?sort=updated&per_page=12`;
+      const res = await this.#fetchWithRetry(url, 2, 1000);
 
       if (!res.ok) {
         if (res.status === 403) {
@@ -73,6 +72,18 @@ export class ProjectsSection extends BaseComponent {
     }
   }
 
+  // 💡 네트워크 재시도 전략: 지수 백오프 (Exponential Backoff)
+  async #fetchWithRetry(url, retries = 2, delay = 1000) {
+    try {
+      return await fetch(url);
+    } catch (error) {
+      if (retries <= 0) throw error;
+      console.warn(`[ProjectsSection] 일시적 네트워크 오류. ${delay}ms 후 재시도... (남은 재시도: ${retries}회)`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return this.#fetchWithRetry(url, retries - 1, delay * 2);
+    }
+  }
+
   // 메서드: 상태 업데이트
   #updateRepoState(repos) {
     const langs = [
@@ -88,14 +99,20 @@ export class ProjectsSection extends BaseComponent {
   }
 
   setEvents() {
-    // 1. 언어 필터 버튼 이벤트
-    const filterButtons = this.shadowRoot.querySelectorAll(".filter-btn");
-    filterButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const lang = btn.getAttribute("data-lang");
-        this.setState({ selectedLanguage: lang });
+    // 1. 이벤트 위임(Event Delegation) 패턴 적용
+    // 버튼마다 일일이 addEventListener를 등록하지 않고 부모 컨테이너(.filter-group)에서 한 번만 처리
+    const filterGroup = this.shadowRoot.querySelector(".filter-group");
+    if (filterGroup) {
+      filterGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest(".filter-btn");
+        if (btn) {
+          const lang = btn.getAttribute("data-lang");
+          if (lang && lang !== this.state.selectedLanguage) {
+            this.setState({ selectedLanguage: lang });
+          }
+        }
       });
-    });
+    }
 
     // 2. 재시도 버튼 이벤트 (에러 상태일 때)
     const retryBtn = this.shadowRoot.querySelector("#retry-btn");
