@@ -97,34 +97,40 @@ graph TD
 ```javascript
 // BaseComponent.js 핵심 구조
 export class BaseComponent extends HTMLElement {
+  #isMounted = false;
+  #stylesInjected = false;
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this.state = { isLoading: false, error: null };
-    this._isMounted = false;
   }
 
   connectedCallback() {
-    this._renderWithStyle();
-    if (!this._isMounted) {
-      this._isMounted = true;
-      this._handleMounted();
+    this.#renderWithStyle();
+    if (!this.#isMounted) {
+      this.#isMounted = true;
+      this.#handleMounted();
     }
   }
 
-  async _handleMounted() {
+  async #handleMounted() {
     try {
       const result = this.mounted();
       if (result instanceof Promise) {
         this.setState({ isLoading: true, error: null });
-    await result;
-    this.setState({ isLoading: false });
+        await result;
+        this.setState({ isLoading: false });
+      }
+    } catch (err) {
+      this.setState({ isLoading: false, error: err });
+    }
   }
 
   // ⭐️ 성능 최적화: 스타일시트 최초 1회만 주입하여 FOUC 및 CSSOM 재파싱 방지
-  _ensureStyles() {
-    if (this._stylesInjected) return;
-    this._stylesInjected = true;
+  #ensureStyles() {
+    if (this.#stylesInjected) return;
+    this.#stylesInjected = true;
 
     const baseLink = document.createElement("link");
     baseLink.rel = "stylesheet";
@@ -143,15 +149,14 @@ export class BaseComponent extends HTMLElement {
     this.shadowRoot.appendChild(container);
   }
 
-  _renderWithStyle() {
-    this._ensureStyles();
+  #renderWithStyle() {
+    this.#ensureStyles();
 
     let html = "";
     if (this.state.error) html = this.renderError(this.state.error);
     else if (this.state.isLoading) html = this.renderLoading();
     else html = this.render();
 
-    // 전체 ShadowRoot가 아닌 본문 컨테이너만 업데이트 (노드 파괴 방지)
     const container = this.shadowRoot.querySelector(".component-container");
     if (container) {
       container.innerHTML = html;

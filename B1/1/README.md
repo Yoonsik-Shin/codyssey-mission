@@ -98,8 +98,8 @@ sequenceDiagram
     Note over Comp: 커스텀 엘리먼트 업그레이드 (Upgrading)
     Comp->>Comp: constructor() -> attachShadow({mode: 'open'})
     Comp->>Comp: connectedCallback() 트리 진입
-    Comp->>Shadow: _renderWithStyle() (CSS 링크 주입 + HTML 템플릿 렌더링)
-    Comp->>Comp: _handleMounted() -> mounted() 호출 (비동기 fetch 등)
+    Comp->>Shadow: #renderWithStyle() (CSS 링크 주입 + HTML 템플릿 렌더링)
+    Comp->>Comp: #handleMounted() -> mounted() 호출 (비동기 fetch 등)
     Comp->>Shadow: setEvents() -> 섀도우 돔 내부 이벤트 리스너 바인딩
 ```
 
@@ -119,7 +119,7 @@ flowchart TD
         S2["새로운 상태와 기존 상태 병합<br/>(this.state = {...this.state, ...newState})"]
     end
 
-    subgraph RenderEngine["3. 상태별 렌더링 분기 (_renderWithStyle)"]
+    subgraph RenderEngine["3. 상태별 렌더링 분기 (#renderWithStyle)"]
         C1{"this.state 상태 분기"}
         R1["renderLoading()<br/>(스켈레톤 쉬머 & 로딩 스피너)"]
         R2["renderError(err)<br/>(에러 박스 & [다시 시도] 버튼)"]
@@ -174,9 +174,7 @@ document.querySelector('project-section').setState({
 // 👉 폴더 아이콘(📂)과 함께 "표시할 프로젝트가 없습니다."라는 안내 박스가 뜹니다.
 
 // 4. 정상 상태로 복구하기
-const p = document.querySelector('project-section');
-p._isMounted = false;
-p.connectedCallback();
+document.querySelector('project-section').reload();
 // (또는 브라우저 새로고침 F5)
 ```
 

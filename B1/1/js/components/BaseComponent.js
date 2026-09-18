@@ -1,4 +1,7 @@
 export class BaseComponent extends HTMLElement {
+  #isMounted = false;
+  #stylesInjected = false;
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -6,7 +9,6 @@ export class BaseComponent extends HTMLElement {
       isLoading: false,
       error: null,
     };
-    this._isMounted = false;
   }
 
   // 어떤 속성(attribute)을 감시할지 브라우저에게 알려줌 (자식 클래스에서 오버라이딩)
@@ -16,11 +18,11 @@ export class BaseComponent extends HTMLElement {
 
   /** @override */
   connectedCallback() {
-    this._renderWithStyle();
+    this.#renderWithStyle();
 
-    if (!this._isMounted) {
-      this._isMounted = true;
-      this._handleMounted();
+    if (!this.#isMounted) {
+      this.#isMounted = true;
+      this.#handleMounted();
     }
   }
 
@@ -29,15 +31,20 @@ export class BaseComponent extends HTMLElement {
     this.unmounted();
   }
 
+  /** 컴포넌트 재마운트 및 데이터 재호출 메서드 (테스트 및 수동 갱신용) */
+  async reload() {
+    await this.#handleMounted();
+  }
+
   /** @override */
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue) {
-      this._renderWithStyle();
+      this.#renderWithStyle();
     }
   }
 
   /** 자식의 mounted()가 비동기(Promise)인지 자동 감지하여 로딩/에러 처리 */
-  async _handleMounted() {
+  async #handleMounted() {
     try {
       const result = this.mounted();
       if (result instanceof Promise) {
@@ -59,13 +66,25 @@ export class BaseComponent extends HTMLElement {
     // 💡 디버그 모드: window.__DEBUG_COMPONENTS__ 가 true이거나 개별 컴포넌트에 debug 플래그가 있을 때 로깅
     if (window.__DEBUG_COMPONENTS__ || this.debugState) {
       console.groupCollapsed(`[State Change] <${this.tagName.toLowerCase()}>`);
-      console.log("%c이전 상태 (Prev):", "color: #94a3b8; font-weight: bold;", prevState);
-      console.log("%c변경 상태 (Diff):", "color: #3b82f6; font-weight: bold;", newState);
-      console.log("%c최종 상태 (Next):", "color: #10b981; font-weight: bold;", this.state);
+      console.log(
+        "%c이전 상태 (Prev):",
+        "color: #94a3b8; font-weight: bold;",
+        prevState,
+      );
+      console.log(
+        "%c변경 상태 (Diff):",
+        "color: #3b82f6; font-weight: bold;",
+        newState,
+      );
+      console.log(
+        "%c최종 상태 (Next):",
+        "color: #10b981; font-weight: bold;",
+        this.state,
+      );
       console.groupEnd();
     }
 
-    this._renderWithStyle();
+    this.#renderWithStyle();
   }
 
   static resolveCss(fileName) {
@@ -77,9 +96,9 @@ export class BaseComponent extends HTMLElement {
   }
 
   // 스타일시트 초기 1회 주입
-  _ensureStyles() {
-    if (this._stylesInjected) return;
-    this._stylesInjected = true;
+  #ensureStyles() {
+    if (this.#stylesInjected) return;
+    this.#stylesInjected = true;
 
     const baseLink = document.createElement("link");
     baseLink.rel = "stylesheet";
@@ -99,8 +118,8 @@ export class BaseComponent extends HTMLElement {
   }
 
   // 내부 렌더링 로직 (스타일 재파싱 방지 및 컨텐츠 영역만 업데이트)
-  _renderWithStyle() {
-    this._ensureStyles();
+  #renderWithStyle() {
+    this.#ensureStyles();
 
     let html = "";
 

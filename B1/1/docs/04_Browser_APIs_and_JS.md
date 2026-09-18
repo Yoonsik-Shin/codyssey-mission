@@ -187,9 +187,7 @@ document.querySelector('project-section').setState({
 });
 
 // 4. 원래 상태로 복구
-const p = document.querySelector('project-section');
-p._isMounted = false;
-p.connectedCallback();
+document.querySelector('project-section').reload();
 ```
 
 ---
