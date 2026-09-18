@@ -298,4 +298,3 @@ class ProjectsGridView {
 
 // ⭐️ 모든 클래스(메인 및 보조 뷰)가 선언 완료된 후 커스텀 엘리먼트로 등록 (TDZ 방지)
 customElements.define("project-section", ProjectsSection);
-

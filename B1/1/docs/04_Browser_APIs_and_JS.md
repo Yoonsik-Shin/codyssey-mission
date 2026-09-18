@@ -225,13 +225,56 @@ textEl.textContent = currentChars.slice(0, this.#charIndex).join("");
 
 ---
 
-## 5. 폼(Form) 유효성 검증과 이벤트 제어
+## 5. 브라우저 기본 동작 차단 (`event.preventDefault()`) 및 폼 제어
+
+브라우저의 특정 HTML 태그들은 사용자가 인터랙션했을 때 실행되는 고유한 **기본 동작(Default Action)**을 가지고 있습니다. `event.preventDefault()`는 브라우저의 이러한 기본 동작을 중단시키고, 개발자가 의도한 자바스크립트 로직을 제어할 수 있도록 해줍니다.
+
+### 1) 프로젝트 적용 핵심 사례
+
+| 대상 태그 | 브라우저 기본 동작 | `event.preventDefault()` 미사용 시 문제점 | 프로젝트 내 적용 목적 & 해결 효과 |
+| :--- | :--- | :--- | :--- |
+| `<form>` | `action` 속성 주소로 페이지 전체 새로고침(Reload) | 새로고침으로 인해 자바스크립트 상태(`this.state`) 초기화 및 화면 깜빡임 | 폼 기본 전송을 가로채고, `fetch()` API를 통해 비동기(AJAX) 전송 |
+| `<a href="#...">` | URL 해시(`#id`) 변경 및 브라우저 즉시 뚝 끊기듯 이동 | 애니메이션 없는 거친 화면 전환 | 기본 점프를 막고 `scrollIntoView({ behavior: 'smooth' })`로 부드러운 스크롤 구현 |
+
+### 2) Contact 폼 적용 상세 코드 (`ContactSection.js`)
+
+```javascript
+async #handleSubmit(event) {
+  // ⭐️ 1. 브라우저의 폼 제출 기본 동작(페이지 새로고침)을 즉시 중단
+  event.preventDefault();
+
+  // 2. 자바스크립트 기반 프론트엔드 유효성 검사 수행
+  const { isValid, errors } = this.#validateForm();
+  if (!isValid) {
+    this.state.errors = errors;
+    ContactFormView.updateErrors(this.shadowRoot, errors);
+    return;
+  }
+
+  // 3. 비동기 백그라운드 전송 (SPA 환경 유지)
+  this.setState({ isSubmitting: true });
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(this.state.formData),
+    });
+    // 성공 시 뷰 상태 전환
+    this.setState({ isSubmitting: false, isSubmitted: true });
+  } catch (err) {
+    // 에러 상태 처리
+  }
+}
+```
+
+### 3) 폼 접근성 및 유효성 검증 설계 원칙
 
 1. **기본 전송 차단**: `event.preventDefault()`로 페이지 새로고침 방지
-2. **이메일 정규식 검증**: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
-3. **실시간 에러 클리어**: 사용자가 입력을 시작(`input` 이벤트)하면 빨간색 에러 메시지를 즉시 지워줌
-4. **접근성 매칭**: `<label for="email">`과 `<input id="email">`을 1:1 연결하여 라벨 클릭 시 해당 인풋에 포커스 이동
-5. **⭐️ 성능 최적화 (미세 DOM 업데이트)**: 유효성 검사 에러 시 `this.setState({ errors })`로 폼 전체 `innerHTML`을 파괴하지 않고, `#applyErrorsToDom()`을 통해 에러 텍스트 노드(`textContent`)와 `invalid` 클래스만 직접 업데이트하여 입력 포커스 유지 및 리플로우 최소화
+2. **이메일 정규식 검증**: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`로 올바른 포맷 검사
+3. **실시간 에러 클리어**: 사용자가 타이핑을 시작(`input` 이벤트)하면 필드 하단 에러 메시지를 즉시 지워 피드백 제공
+4. **접근성 매칭**: `<label for="email">`과 `<input id="email">`을 1:1 연결하여 스크린 리더 지원 및 라벨 클릭 포커스 지원
+5. **첫 번째 오류 필드 자동 포커싱**: 유효성 검증 실패 시 오류가 발생한 첫 번째 입력창으로 `focus()`를 자동 이동시켜 키보드 접근성 향상
+6. **⭐️ 미세 DOM 업데이트**: 에러 발생 시 폼 전체 `innerHTML`을 날리지 않고, 에러 텍스트(`textContent`)와 `invalid` 클래스만 직접 업데이트하여 입력 포커스 및 작성 중인 값 유지
 
 ---
 
