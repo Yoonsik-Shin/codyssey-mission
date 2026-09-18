@@ -29,13 +29,53 @@
 
 ---
 
-## 3. Shadow DOM과 스타일 캡슐화
+## 3. Shadow DOM과 스타일 캡슐화 (시각적 아키텍처)
 
-### 왜 `this.attachShadow({ mode: "open" })`을 쓰는가?
+Shadow DOM은 메인 웹페이지(Light DOM)와 컴포넌트 내부 사이에 **"보이지 않는 차단벽(Shadow Boundary)"**을 세워 완벽한 캡슐화(Encapsulation)를 보장합니다.
 
-- **외부 CSS 침투 차단**: 외부 전역 CSS(`p { color: red; }`)가 컴포넌트 내부로 들어와 스타일을 망가뜨리지 않습니다.
-- **내부 CSS 유출 방지**: 컴포넌트 내부의 스타일이 밖으로 새어나가지 않습니다.
-- **DOM 격리**: `document.querySelector('button')`으로 찾아도 컴포넌트 내부의 버튼은 보호되어 탐색되지 않습니다.
+### 1) Light DOM vs Shadow DOM 구조 시각화
+
+```mermaid
+graph TD
+    subgraph LightDOM ["메인 웹페이지 (Light DOM)"]
+        Document["document (최상위 트리)"]
+        Header["header#main-header"]
+        GlobalCSS["전역 CSS (style.css)"]
+        Host["<project-section> (Shadow Host: 문지기 태그)"]
+        
+        Document --> Header
+        Document --> Host
+        GlobalCSS -.->|"일반 선택자 차단 ❌<br/>(.project-card, button 등)"| Wall
+    end
+
+    subgraph Boundary ["격리 경계선 (Shadow Boundary)"]
+        Wall["🧱 #shadow-root (mode: open)"]
+    end
+
+    subgraph ShadowTree ["컴포넌트 독립 트리 (Shadow DOM)"]
+        CompCSS["컴포넌트 전용 CSS<br/>(ProjectsSection.css)"]
+        Container[".projects-container"]
+        Cards[".project-card"]
+        Button["button.filter-btn"]
+
+        Wall --> CompCSS
+        Wall --> Container
+        Container --> Cards
+        Container --> Button
+    end
+
+    Host --> Wall
+    GlobalCSS ==>|"💡 유일한 관통 허용: CSS 변수<br/>var(--primary-color), var(--card-bg)"| ShadowTree
+```
+
+### 2) 왜 `this.attachShadow({ mode: "open" })`을 쓰는가?
+
+| 비교 관점 | 일반 DOM (Light DOM) | 섀도우 돔 (Shadow DOM) |
+| :--- | :--- | :--- |
+| **CSS 스타일 범위** | **전역(Global)**: 클래스명이 겹치면 페이지 전체가 오염됨 | **지역(Scoped)**: 컴포넌트 내부 CSS는 절대 밖으로 새지 않음 |
+| **외부 스타일 영향** | 부모/전역 스타일의 영향을 무조건 받음 | **원천 차단**: 전역 태그 선택자가 내부로 침투하지 못함 |
+| **DOM 탐색 (`querySelector`)** | `document.querySelector('button')`으로 모두 잡힘 | 외부 `document` 탐색에서 제외되어 완벽히 은닉됨 |
+| **예외 관통 규칙** | 해당 없음 | **CSS 변수(`var(--...)`)만 유일하게 경계를 뚫고 상속**됨 |
 
 ---
 
