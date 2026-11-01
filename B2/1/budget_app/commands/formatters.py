@@ -14,8 +14,30 @@ def pad(text: str, width: int, align_right: bool = False) -> str:
     return padding + text if align_right else text + padding
 
 
+def format_table(header: list[str], rows: list[list[str]], right_align: set[int] = frozenset()) -> list[str]:
+    """
+    헤더 + 구분선 + 행을 컬럼 폭에 맞춰 정렬한 문자열 줄로 변환 (외부 라이브러리 없이).
+    right_align의 컬럼(금액 등)은 오른쪽 정렬합니다.
+    """
+    if not rows:
+        return []
+
+    widths = [max(display_width(row[col]) for row in [header, *rows]) for col in range(len(header))]
+
+    def render(row: list[str]) -> str:
+        # 뒤쪽의 빈 컬럼(메모/태그 없음)은 구분자까지 생략
+        last = len(row)
+        while last > 0 and not row[last - 1]:
+            last -= 1
+        cells = [pad(row[col], widths[col], align_right=(col in right_align)) for col in range(last)]
+        return " | ".join(cells).rstrip()
+
+    separator = "-+-".join("-" * width for width in widths)
+    return [render(header), separator, *(render(row) for row in rows)]
+
+
 def format_transactions(transactions: Iterable[Transaction]) -> list[str]:
-    """거래 목록을 컬럼 폭을 맞춘 테이블 문자열 줄로 변환 (외부 라이브러리 없이 정렬)"""
+    header = ["id", "날짜", "타입", "카테고리", "금액", "메모", "태그"]
     rows = [
         [
             tx.id,
@@ -28,21 +50,7 @@ def format_transactions(transactions: Iterable[Transaction]) -> list[str]:
         ]
         for tx in transactions
     ]
-    if not rows:
-        return []
-
-    widths = [max(display_width(row[col]) for row in rows) for col in range(len(rows[0]))]
-    amount_col = 4
-
-    lines = []
-    for row in rows:
-        # 뒤쪽의 빈 컬럼(메모/태그 없음)은 구분자까지 생략
-        last = len(row)
-        while last > 0 and not row[last - 1]:
-            last -= 1
-        cells = [pad(row[col], widths[col], align_right=(col == amount_col)) for col in range(last)]
-        lines.append(" | ".join(cells).rstrip())
-    return lines
+    return format_table(header, rows, right_align={4})
 
 
 def format_won(amount: int) -> str:

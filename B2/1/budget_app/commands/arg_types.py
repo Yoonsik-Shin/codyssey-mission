@@ -2,6 +2,7 @@ from argparse import ArgumentTypeError
 from collections.abc import Callable
 from datetime import date
 from typing import TypeVar
+from ..models.category import Category
 from ..models.period import Month, parse_date as parse_iso_date
 from ..models.transaction import TransactionType
 
@@ -48,3 +49,20 @@ def ask(label: str, parse: Callable[[str], T]) -> T:
             return parse(raw)
         except ArgumentTypeError as e:
             print(f"❌ {e}")
+
+
+def ask_category(category_names: list[str], given: str | None) -> str:
+    """
+    등록된 카테고리가 들어올 때까지 재입력을 요구 (요구사항: 안내 후 재입력/등록 유도).
+    최종 존재 검증은 UseCase가 다시 하므로, 여기서는 대화형 UX를 위한 사전 확인입니다.
+    """
+    candidate = given
+    while True:
+        if candidate is not None and Category.normalize_name(candidate) in category_names:
+            return candidate
+
+        if candidate is not None:
+            print(f"❌ 등록되지 않은 카테고리입니다: '{candidate}'")
+            print(f"💡 사용 가능한 카테고리: [{', '.join(category_names)}]")
+            print("💡 (새 카테고리를 추가하려면 'category add'로 먼저 등록해 주세요.)")
+        candidate = input("카테고리: ")
