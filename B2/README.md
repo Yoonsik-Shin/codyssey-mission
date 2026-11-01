@@ -7,6 +7,7 @@
 - [3. 설계 결정 기록](#3-설계-결정-기록) — 구조가 지금 모양이 되기까지의 질문과 결론
 - [4. 핵심 개념 정리](#4-핵심-개념-정리) — 구현에 쓰인 Python 문법/개념
 - [5. 과제 목표별 설명](#5-과제-목표별-설명) — 저장/CRUD, 계층 책임, 제너레이터, 데코레이터, 타입 힌트
+- [6. 보너스 과제](#6-보너스-과제) — 백업, 반복 내역, 테이블 정렬, 저장 원자성
 
 ---
 
@@ -41,6 +42,10 @@ python -m budget_app --verbose summary --month 2024-01   # 실행 로그 + 소�
 | `<data-dir>/categories.csv` | 카테고리 목록 | `name` |
 | `<data-dir>/budgets.csv` | 월 예산 | `id,month,category,amount` (`id` = `YYYY-MM:all`) |
 | `<data-dir>/transactions.seq` | 마지막으로 발급한 거래 id 순번 | 숫자 1개 |
+| `<data-dir>/recurring.csv` | 반복 내역 규칙 (보너스) | `id,type,category,amount,day,memo,tags` |
+| `<data-dir>/recurring_log.csv` | 반복 내역 적용 기록 — 월별 중복 생성 방지 (보너스) | `rule_id,month,transaction_id` |
+| `<data-dir>/recurring.seq` | 마지막으로 발급한 반복 내역 id 순번 (보너스) | 숫자 1개 |
+| `<data-dir>/backups/<타임스탬프>/` | 백업 (보너스) | 위 데이터 파일 복사본 |
 
 - 형식: CSV, UTF-8, 헤더 포함. 기본 폴더는 `./data`
 - **초기 실행**: 파일이 없으면 처음 읽거나 쓸 때 자동 생성하고 `[안내]` 메시지를 출력합니다. 카테고리 파일이 없으면 기본 카테고리(`food, transport, housing, salary, shopping, etc`)를 자동 등록합니다 (안 A).
@@ -82,6 +87,19 @@ python -m budget_app delete --id TX-000001
 python -m budget_app import --from import.csv
 python -m budget_app export --out export.csv --month 2024-01
 python -m budget_app export --out export.csv --from 2024-01-01 --to 2024-03-31
+
+# [보너스] 반복 내역 — 등록 후 특정 월에 거래 자동 생성 (같은 달 재실행 시 중복 없음)
+python -m budget_app recurring add                      # 대화형
+python -m budget_app recurring add --type income --category salary --amount 3000000 --day 25 --memo 월급 --tags ""
+python -m budget_app recurring list
+python -m budget_app recurring apply --month 2024-02
+python -m budget_app recurring remove --id RC-0001
+
+# [보너스] 백업 — 타임스탬프 폴더로 백업, 복원 전 현재 상태 자동 백업
+python -m budget_app backup
+python -m budget_app backup list
+python -m budget_app backup restore --name 20240115-153000      # 확인 질문 (y/N)
+python -m budget_app backup restore --name 20240115-153000 --yes
 ```
 
 ### import/export CSV 스키마
@@ -259,7 +277,32 @@ echo "exit=$?"                                  # [취소], exit=130
 b --verbose list --limit 2                      # [로그] 실행 시작/종료 (소요 시간)
 ```
 
-#### ⑩ 자동 테스트 · 정리
+#### ⑩ [보너스] 반복 내역
+
+```bash
+b recurring add --type income  --category salary --amount 3000000 --day 25 --memo 월급 --tags ""   # RC-0001
+b recurring add --type expense --category etc    --amount 500000  --day 31 --memo 월세 --tags ""   # RC-0002
+b recurring add                      # 대화형: 카테고리 nope → cafe(⑥에서 추가), 일자 32 → 15 처럼 틀려 보기  # RC-0003
+b recurring list                     # 헤더 + 정렬된 표
+b recurring apply --month 2024-02    # 월급 2024-02-25, 월세 2024-02-29 (31일 → 윤년 말일)
+b recurring apply --month 2024-02    # created=0, already=3 — 중복 생성 없음
+b list --limit 3
+b category remove --name salary      # [오류] 거래 n건, 반복 내역 1건 사용 중
+b recurring remove --id RC-0003      # 규칙만 삭제, 생성된 거래는 유지
+```
+
+#### ⑪ [보너스] 백업 · 복원
+
+```bash
+b backup                             # [백업 완료] 20261101-194454 (n files)
+b backup list
+b delete --id TX-000001              # 일부러 데이터 변경
+b backup restore --name <위 이름>     # y 입력 → 복원 전 상태도 자동 백업 후 복원
+b list --limit 10                    # TX-000001 되돌아옴
+b backup list                        # 자동 백업이 하나 더 보임
+```
+
+#### ⑫ 자동 테스트 · 정리
 
 ```bash
 python3 -m unittest discover -s tests -v
@@ -318,12 +361,15 @@ budget_app/
 │   ├── formatters.py      # 출력: 콘솔 테이블 정렬(한글 폭 고려), 금액/예산 출력
 │   ├── error_handler.py   # @handle_errors, hint_for(예외 → CLI 사용법 안내), UsageError
 │   ├── add.py  list.py  search.py  summary.py  budget.py  category.py
-│   └── update.py  delete.py  import_csv.py  export_csv.py
+│   ├── update.py  delete.py  import_csv.py  export_csv.py
+│   └── recurring.py  backup.py      # 보너스
 ├── usecases/
 │   ├── add_transaction.py  list_transactions.py  search_transactions.py
 │   ├── update_transaction.py  delete_transaction.py  get_monthly_summary.py
 │   ├── set_budget.py  add_category.py  list_categories.py  remove_category.py
 │   ├── import_transactions.py  export_transactions.py
+│   ├── add/list/remove_recurring_rule(s).py  apply_recurring_rules.py   # 보너스
+│   ├── create_backup.py  list_backups.py  restore_backup.py              # 보너스
 │   └── category_guard.py  # ensure_category_exists(): 여러 UseCase가 쓰는 존재 검증
 ├── models/
 │   ├── transaction.py     # Transaction, TransactionType, create(), recency_key()
@@ -331,16 +377,20 @@ budget_app/
 │   ├── budget.py          # Budget, evaluate() → BudgetStatus
 │   ├── summary.py         # MonthlySummary.from_transactions()
 │   ├── transaction_query.py  # TransactionQuery.matches(), for_month()
+│   ├── recurring.py       # RecurringRule: create(), occurrence_date() 말일 보정, to_transaction() (보너스)
+│   ├── backup.py          # Backup 값 객체: 타임스탬프 이름 (보너스)
 │   └── period.py          # Month 값 객체(parse/of/first_day/last_day), parse_date — 기간 도메인 규칙
 ├── repositories/
 │   ├── base.py            # BaseRepository[T]
 │   ├── transaction.py  category.py  budget.py   # budget: find_by_month() — 저장 키 형식은 여기만 앎
+│   ├── recurring.py  backup.py      # 보너스: 규칙 + 적용 기록, 백업 ↔ Backup
 │   └── transaction_csv.py # import/export CSV 어댑터 (UseCase에 주입): 스키마, 헤더 검증, 행 ↔ Transaction
 └── stores/                # 도메인 객체를 모름 (dict만)
     ├── base.py            # BaseStore
     ├── csv_store.py  jsonl_store.py
     ├── csv_file.py        # stores 내부 헬퍼: read_csv_rows (제너레이터), write_csv_rows (원자적)
-    └── sequence_file.py   # 마지막 발급 id 순번
+    ├── sequence_file.py   # 마지막 발급 id 순번
+    └── backup_store.py    # 보너스: 데이터 파일 → 타임스탬프 폴더 복사/복원
 ```
 
 ---
@@ -549,6 +599,7 @@ def test_delete_command():
 | `json_store.py` | `stores/` | 삭제 | `BaseStore`를 구현하지 않고 쓰는 곳도 없음 |
 
 그대로 둔 것:
+
 - `export`의 "`--month` 또는 `--from/--to` 필수" 규칙 → 옵션 조합이므로 Command
 - `AddCommand`의 카테고리 사전 확인 → 대화형 재입력 UX. 최종 검증은 UseCase가 다시 함
 - `usecases/category_guard.py` → 여러 UseCase가 쓰는 "저장소 조회가 필요한 검증"
@@ -676,7 +727,7 @@ cli.main()                 @handle_errors로 감쌈. --data-dir 읽고 bootstrap
 
 **왜**: 파일 전체를 `list`로 읽으면 메모리가 파일 크기만큼 필요합니다. 제너레이터는 한 번에 한 행만 메모리에 두므로 파일이 커져도 사용량이 일정합니다. `tests/`의 `StreamingTest`가 5만 건에서 `list --limit 10`의 최대 메모리가 전체 로드 대비 1/10 미만인지 검사합니다.
 
-**동작 방식**
+#### 동작 방식
 
 ```python
 # stores/csv_file.py
@@ -699,7 +750,8 @@ heapq.nlargest(limit, self._tx_repo.stream(), key=Transaction.recency_key)
 3. 다시 요청하면 멈춘 지점부터 이어서 실행합니다. 끝까지 가면 `with` 블록이 끝나면서 파일이 닫힙니다.
 4. 여러 제너레이터를 연결하면 **한 행이 파이프라인 전체를 통과한 뒤** 다음 행을 읽습니다 (파일 → dict → Transaction → 필터 → heap).
 
-**주의점**
+#### 주의점
+
 - **한 번만 순회 가능**: 다 쓴 제너레이터는 다시 돌릴 수 없습니다. 두 번 필요하면 `stream()`을 다시 호출합니다.
 - **지연 실행 함정**: 제너레이터 함수 안의 검증은 첫 `next()` 때 실행됩니다. 그래서 `TransactionCsvFile.read()`는 파일 존재와 헤더를 **먼저 검사한 뒤** 행 제너레이터를 반환하도록 일반 함수로 감쌌습니다.
 - **정렬과의 조화**: 최신순은 끝까지 봐야 알 수 있습니다. 전체를 정렬하는 대신 `heapq.nlargest(N, ...)`로 N건만 유지해, 스트리밍을 지키면서 메모리를 결과 크기로 제한합니다.
@@ -760,7 +812,7 @@ def execute(self, args):
 
 타입 힌트는 실행 시 강제되지 않지만, IDE와 정적 분석기(pyright/mypy)가 호출 전에 실수를 잡아 주고 **함수만 보고도 무엇을 주고받는지** 알 수 있게 합니다.
 
-**① 문자열 대신 도메인 타입 — `Month`**
+#### ① 문자열 대신 도메인 타입 — `Month`
 
 ```python
 # 이전: 아무 문자열이나 들어올 수 있음. 검증을 호출하는 쪽마다 반복
@@ -773,7 +825,7 @@ usecase.execute(Month.parse("2024-01"))
 usecase.execute("2024-01")     # IDE가 타입 불일치로 경고
 ```
 
-**② `| None` — 없을 수 있음을 강제로 처리**
+#### ② `| None` — 없을 수 있음을 강제로 처리
 
 ```python
 def find_by_id(self, entity_id: str) -> Transaction | None: ...
@@ -785,7 +837,7 @@ if current is None:
 current.amount                 # 여기서부터는 Transaction으로 확정
 ```
 
-**③ 추상 타입으로 받기 — 교체 가능한 계약**
+#### ③ 추상 타입으로 받기 — 교체 가능한 계약
 
 ```python
 class AddTransactionUseCase:
@@ -794,7 +846,7 @@ class AddTransactionUseCase:
 
 구현체(`StoreTransactionRepository`)가 아니라 인터페이스 타입을 받으므로, 저장 방식을 바꾸거나 테스트에서 가짜 객체를 넣어도 UseCase 코드는 그대로입니다 ([3.10 테스트 예](#310-의존성-주입-왜-생성자로-받나)).
 
-**④ 제너레이터 · 데코레이터의 계약**
+#### ④ 제너레이터 · 데코레이터의 계약
 
 ```python
 def stream(self) -> Iterator[Transaction]: ...                   # 한 번만 순회하는 스트림
@@ -803,7 +855,72 @@ def log_execution(func: Callable[P, R]) -> Callable[P, R]: ...  # 감싼 뒤에�
 
 `ParamSpec(P)`가 없으면 데코레이터를 거친 함수는 `(...) -> Any`가 되어 인자 자동완성과 검사가 사라집니다.
 
-**⑤ 그 밖의 예**
+#### ⑤ 그 밖의 예
+
 - `BaseRepository(ABC, Generic[T])`: `TransactionRepository`는 `save(Transaction) -> Transaction`, `CategoryRepository`는 `save(Category) -> Category`로 같은 인터페이스를 타입만 바꿔 재사용합니다.
 - `TransactionType` (StrEnum): `type_val: TransactionType`이면 `"expens"` 같은 오타 문자열이 들어갈 자리가 없습니다.
 - `@override`: 부모에 없는 메서드를 오버라이드한다고 표시하면(오타) 정적 분석기가 오류를 냅니다.
+
+---
+
+## 6. 보너스 과제
+
+| 보너스 | 명령 | 핵심 |
+| --- | --- | --- |
+| 백업 | `backup`, `backup list`, `backup restore --name` | 타임스탬프 폴더, 반쯤 만든 백업이 남지 않음, 복원 전 자동 백업 |
+| 반복 내역 | `recurring add/list/remove/apply --month` | 규칙 → 거래 생성, 월별 중복 방지, 말일 보정 |
+| 테이블 정렬 | `list`, `search`, `recurring list`, `backup list` | 헤더 + 구분선, 한글 폭 계산, 금액 오른쪽 정렬, `format_table()` 공용 |
+| 저장 원자성 | 모든 쓰기 | 임시 파일 → `os.replace`, 권한 유지 |
+
+### 6.1 백업 — 파일 처리 + 운영 안전장치
+
+```text
+data/
+├── transactions.csv ...
+└── backups/
+    ├── 20240115-153000/      ← backup
+    ├── 20240115-153000-2/    ← 같은 초에 다시 만들면 접미사
+    └── 20240115-160210/      ← restore 직전 자동 생성
+```
+
+- **생성**: 관리 대상 데이터 파일을 숨김 임시 폴더(`.tmp-*`)에 모두 복사한 뒤 폴더 이름을 바꿔 확정합니다. 복사 중 실패해도 반쯤 만든 백업이 목록에 나타나지 않습니다.
+- **복원**: 복원 전에 현재 상태를 먼저 백업하므로(`restore`가 출력하는 이름), 잘못 복원해도 그 백업으로 다시 되돌릴 수 있습니다. 파일마다 원자적으로 교체하고, 백업 시점에 없던 관리 파일은 지워 백업 시점과 똑같이 맞춥니다. 기본으로 `(y/N)`을 묻고, `--yes`로 생략할 수 있습니다.
+- **계층**: 파일 복사는 `stores/backup_store.py`(도메인 모름), `Backup` 값 객체 변환은 `repositories/backup.py`, 흐름은 `usecases/*_backup.py`가 맡습니다. 현재 시각은 `now` 함수로 주입받아 테스트에서 고정할 수 있습니다.
+
+### 6.2 반복 내역 — 규칙 기반 데이터 생성 + 예외 처리
+
+```python
+rule = RecurringRule.create(type_val="expense", category="housing", amount=500000, day=31)
+rule.occurrence_date(Month.parse("2024-02"))   # 2024-02-29 — 없는 날은 말일로 보정
+rule.to_transaction(Month.parse("2024-02"))    # Transaction.create로 다시 검증된 거래
+```
+
+| 상황 | 처리 |
+| --- | --- |
+| 같은 달에 `apply`를 다시 실행 | `recurring_log.csv`에 (규칙, 월, 거래 id)가 있으면 건너뜀 → `already` |
+| 31일 규칙을 30일/28일 달에 적용 | 그 달의 말일로 보정 |
+| 규칙의 카테고리가 사라짐 (파일 수동 수정 등) | 그 규칙만 사유와 함께 건너뜀 → `skipped` |
+| 사용 중인 카테고리 삭제 | 거래와 **반복 내역도** 사용처로 세어 삭제 거부. `--replace-with` 시 둘 다 이동 |
+| 규칙 삭제 | 규칙만 지우고 이미 생성된 거래는 유지 (과거 기록 보존). id는 재사용하지 않음 |
+
+- 생성할 거래는 `save_many`로 **한 번에 원자적으로 저장한 뒤** 적용 기록을 남깁니다. 두 파일을 동시에 원자적으로 쓸 수는 없으므로, 중단되면 "기록이 빠져 재실행 시 중복"되는 쪽을 택했습니다. 반대 순서(기록 먼저)는 "거래가 영영 생성되지 않는" 쪽이라 더 나쁩니다.
+- 적용 기록을 거래 파일이 아니라 별도 파일에 두어, 기존 `transactions.csv` 스키마를 바꾸지 않았습니다.
+
+### 6.3 출력 포맷 테이블 정렬 — 콘솔 UX + 포맷터 분리
+
+```text
+id        | 날짜       | 타입    | 카테고리 |      금액 | 메모 | 태그
+----------+------------+---------+----------+-----------+------+-------
+TX-000002 | 2024-02-29 | expense | housing  |   500,000 | 월세
+TX-000001 | 2024-02-25 | income  | salary   | 3,000,000 | 월급 | #fixed
+```
+
+- `commands/formatters.py`의 `format_table(header, rows, right_align)` 하나를 거래·반복 내역·백업 목록이 공유합니다.
+- 한글은 터미널에서 2칸을 차지하므로 `unicodedata.east_asian_width`로 표시 폭을 계산해 `str.ljust`로는 맞지 않는 정렬을 맞춥니다.
+- 뒤쪽 빈 컬럼(메모/태그 없음)은 구분자까지 생략합니다.
+
+### 6.4 저장 원자성 강화 — 파일 기반 트랜잭션
+
+- update/delete/import 등 전체 재작성은 임시 파일에 쓴 뒤 `os.replace`로 교체합니다 ([3.15](#315-데이터-안전성), [5.1](#51-파일-기반-영구-저장과-crud--검색--요약--입출력)).
+- `tempfile.mkstemp`는 권한 600으로 파일을 만들기 때문에, 교체 전에 기존 파일 권한을 복사합니다 (`replace_preserving_mode`). 처음에는 저장 후 데이터 파일 권한이 `-rw-------`로 바뀌는 문제가 있었습니다.
+- 백업 생성(임시 폴더 → rename)과 복원(파일별 교체)도 같은 원칙을 따릅니다.
