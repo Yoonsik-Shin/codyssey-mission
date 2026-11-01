@@ -3,6 +3,13 @@ from . import commands, repositories, stores, usecases
 
 DEFAULT_DATA_DIR = "./data"
 
+# 백업 대상이 되는 데이터 파일 (모두 <data-dir> 바로 아래)
+DATA_FILES = [
+    "transactions.csv", "transactions.seq",
+    "categories.csv", "budgets.csv",
+    "recurring.csv", "recurring.seq", "recurring_log.csv",
+]
+
 
 def build_commands(data_dir: str = DEFAULT_DATA_DIR) -> list[commands.BaseCommand]:
     """
@@ -31,6 +38,9 @@ def build_commands(data_dir: str = DEFAULT_DATA_DIR) -> list[commands.BaseComman
         stores.CsvStore(path("recurring_log.csv"), repositories.RECURRING_LOG_FIELDS),
         stores.SequenceFile(path("recurring.seq")),
     )
+    backup_repo = repositories.StoreBackupRepository(
+        stores.DirectoryBackupStore(data_dir, path("backups"), DATA_FILES),
+    )
     csv_file = repositories.TransactionCsvFile()
 
     # 여러 Command가 함께 쓰는 UseCase
@@ -58,5 +68,10 @@ def build_commands(data_dir: str = DEFAULT_DATA_DIR) -> list[commands.BaseComman
             usecases.RemoveRecurringRuleUseCase(rule_repo),
             usecases.ApplyRecurringRulesUseCase(rule_repo, tx_repo, category_repo),
             list_categories,
+        ),
+        commands.BackupCommand(
+            usecases.CreateBackupUseCase(backup_repo),
+            usecases.ListBackupsUseCase(backup_repo),
+            usecases.RestoreBackupUseCase(backup_repo),
         ),
     ]

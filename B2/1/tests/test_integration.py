@@ -77,11 +77,11 @@ class HelpAndInitTest(CliTestCase):
     def test_all_commands_have_help_and_do_not_touch_files(self):
         self.assertIn("가계부 앱", self.assert_ok(self.run_cli("--help")))
         for command in ["add", "list", "search", "summary", "budget", "category",
-                        "update", "delete", "import", "export", "recurring"]:
+                        "update", "delete", "import", "export", "recurring", "backup"]:
             with self.subTest(command=command):
                 self.assertIn("usage:", self.assert_ok(self.run_cli(command, "--help")))
         for sub in [("budget", "set"), ("budget", "show"), ("category", "add"), ("category", "remove"),
-                    ("recurring", "add"), ("recurring", "apply")]:
+                    ("recurring", "add"), ("recurring", "apply"), ("backup", "list"), ("backup", "restore")]:
             self.assert_ok(self.run_cli(*sub, "--help"))
         self.assertFalse(self.data_dir.exists(), "--help만으로 데이터 파일이 생기면 안 됨")
 
@@ -489,6 +489,46 @@ class RecurringTest(CliTestCase):
         out = self.assert_ok(self.run_cli("category", "remove", "--name", "housing", "--replace-with", "etc"))
         self.assertIn("1건의 반복 내역을 'etc'(으)로 옮겼습니다", out)
         self.assertIn("| etc", self.assert_ok(self.run_cli("recurring", "list")))
+
+
+class BackupTest(CliTestCase):
+    """보너스: 타임스탬프 백업 + 복원"""
+
+    def backup_names(self) -> list[str]:
+        return sorted(p.name for p in (self.data_dir / "backups").iterdir() if not p.name.startswith("."))
+
+    def test_backup_requires_data(self):
+        self.assertIn("백업할 데이터 파일이 없습니다", self.assert_error(self.run_cli("backup")))
+
+    def test_backup_list_and_restore(self):
+        self.add("2024-01-15", "expense", "food", 100)
+        out = self.assert_ok(self.run_cli("backup"))
+        self.assertRegex(out, r"\[백업 완료\] \d{8}-\d{6}")
+        [name] = self.backup_names()
+        backed_up = (self.data_dir / "backups" / name / "transactions.csv").read_text(encoding="utf-8")
+
+        self.assertIn(name, self.assert_ok(self.run_cli("backup", "list")))
+
+        self.assert_ok(self.run_cli("delete", "--id", "TX-000001"))
+        self.assertIn("[취소]", self.assert_ok(self.run_cli("backup", "restore", "--name", name, stdin="n\n")))
+        self.assertEqual(self.read_rows("transactions.csv"), [])
+
+        out = self.assert_ok(self.run_cli("backup", "restore", "--name", name, stdin="y\n"))
+        self.assertIn("복원 전 상태를", out)
+        self.assertIn("[복원 완료]", out)
+        self.assertEqual((self.data_dir / "transactions.csv").read_text(encoding="utf-8"), backed_up)
+        self.assertEqual(len(self.backup_names()), 2)  # 복원 전 자동 백업 포함
+
+    def test_same_second_backups_get_unique_names(self):
+        self.add("2024-01-15", "expense", "food", 100)
+        for _ in range(3):
+            self.assert_ok(self.run_cli("backup"))
+        names = self.backup_names()
+        self.assertEqual(len(set(names)), 3)
+
+    def test_restore_unknown_backup(self):
+        self.add("2024-01-15", "expense", "food", 100)
+        self.assertIn("존재하지 않는 백업", self.assert_error(self.run_cli("backup", "restore", "--name", "nope", "--yes")))
 
 
 class DataSafetyTest(CliTestCase):

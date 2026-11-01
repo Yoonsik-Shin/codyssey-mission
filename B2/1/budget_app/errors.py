@@ -28,6 +28,18 @@ class RecurringRuleNotFoundError(NotFoundError):
         self.rule_id = rule_id
 
 
+class BackupNotFoundError(NotFoundError):
+    def __init__(self, name: str, available: list[str]):
+        super().__init__(f"존재하지 않는 백업입니다: '{name}'")
+        self.name = name
+        self.available = available
+
+
+class NothingToBackupError(BudgetAppError):
+    def __init__(self):
+        super().__init__("백업할 데이터 파일이 없습니다.")
+
+
 class SourceFileNotFoundError(NotFoundError):
     def __init__(self, path: str):
         super().__init__(f"가져올 파일이 없습니다: {path}")

@@ -1,5 +1,6 @@
 import unicodedata
 from collections.abc import Iterable
+from ..models.backup import Backup
 from ..models.budget import BudgetStatus
 from ..models.recurring import RecurringRule
 from ..models.transaction import Transaction
@@ -69,6 +70,15 @@ def format_recurring_rules(rules: Iterable[RecurringRule]) -> list[str]:
         for rule in rules
     ]
     return format_table(header, rows, right_align={1, 4})
+
+
+def format_backups(backups: Iterable[Backup]) -> list[str]:
+    header = ["이름", "생성 시각", "파일"]
+    rows = [
+        [b.name, b.created_at.strftime("%Y-%m-%d %H:%M:%S"), ", ".join(b.files)]
+        for b in backups
+    ]
+    return format_table(header, rows)
 
 
 def format_won(amount: int) -> str:

@@ -4,11 +4,13 @@ import sys
 from collections.abc import Callable
 from typing import ParamSpec, TypeVar
 from ..errors import (
+    BackupNotFoundError,
     BudgetAppError,
     CategoryInUseError,
     CategoryNotFoundError,
     DuplicateCategoryError,
     InvalidCsvHeaderError,
+    NothingToBackupError,
     RecurringRuleNotFoundError,
     NothingToUpdateError,
     SameReplacementCategoryError,
@@ -55,6 +57,10 @@ def hint_for(error: BudgetAppError) -> str:
             return "--date, --type, --category, --amount, --memo, --tags 중 하나 이상을 지정하세요."
         case RecurringRuleNotFoundError():
             return "'python -m budget_app recurring list'로 id를 확인하세요."
+        case BackupNotFoundError():
+            return "'python -m budget_app backup list'로 백업 이름을 확인하세요."
+        case NothingToBackupError():
+            return "거래나 카테고리를 먼저 등록한 뒤 백업하세요. --data-dir 위치도 확인하세요."
         case SourceFileNotFoundError():
             return "파일 경로를 확인하세요."
         case InvalidCsvHeaderError():

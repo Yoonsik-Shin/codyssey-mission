@@ -1,5 +1,6 @@
 """CLI 계층 — 조립(bootstrap)에서 `commands.AddCommand`처럼 쓰도록 명령 클래스를 다시 내보냅니다."""
 from .add import AddCommand
+from .backup import BackupCommand
 from .base import BaseCommand
 from .budget import BudgetCommand
 from .category import CategoryCommand
@@ -13,7 +14,7 @@ from .summary import SummaryCommand
 from .update import UpdateCommand
 
 __all__ = [
-    "RecurringCommand",
+    "BackupCommand", "RecurringCommand",
     "AddCommand", "BaseCommand", "BudgetCommand", "CategoryCommand", "DeleteCommand",
     "ExportCommand", "ImportCommand", "ListCommand", "SearchCommand", "SummaryCommand", "UpdateCommand",
 ]
