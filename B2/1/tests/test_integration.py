@@ -77,10 +77,11 @@ class HelpAndInitTest(CliTestCase):
     def test_all_commands_have_help_and_do_not_touch_files(self):
         self.assertIn("가계부 앱", self.assert_ok(self.run_cli("--help")))
         for command in ["add", "list", "search", "summary", "budget", "category",
-                        "update", "delete", "import", "export"]:
+                        "update", "delete", "import", "export", "recurring"]:
             with self.subTest(command=command):
                 self.assertIn("usage:", self.assert_ok(self.run_cli(command, "--help")))
-        for sub in [("budget", "set"), ("budget", "show"), ("category", "add"), ("category", "remove")]:
+        for sub in [("budget", "set"), ("budget", "show"), ("category", "add"), ("category", "remove"),
+                    ("recurring", "add"), ("recurring", "apply")]:
             self.assert_ok(self.run_cli(*sub, "--help"))
         self.assertFalse(self.data_dir.exists(), "--help만으로 데이터 파일이 생기면 안 됨")
 
@@ -421,6 +422,73 @@ class ImportExportTest(CliTestCase):
                 return [{k: v for k, v in r.items() if k != "id"} for r in csv.DictReader(f)]
 
         self.assertEqual(without_id(self.data_dir / "transactions.csv"), without_id(other / "transactions.csv"))
+
+
+class RecurringTest(CliTestCase):
+    """보너스: 반복 내역 등록 + 특정 월 자동 생성"""
+
+    def ids(self, out: str) -> list[str]:
+        return [line.split(" | ")[0] for line in out.splitlines() if line.startswith("TX-")]
+
+    def add_rule(self, type_: str, category: str, amount: int, day: int, memo: str = "") -> str:
+        out = self.assert_ok(self.run_cli("recurring", "add", "--type", type_, "--category", category,
+                                          "--amount", str(amount), "--day", str(day), "--memo", memo, "--tags", ""))
+        return out.split("id=")[1].split()[0]
+
+    def test_add_list_and_interactive_validation(self):
+        self.assertEqual(self.add_rule("income", "salary", 3000000, 25, "월급"), "RC-0001")
+        stdin = "\n".join(["expense", "nope", "food", "0", "12000", "32", "15", "구독", "sub"]) + "\n"
+        out = self.assert_ok(self.run_cli("recurring", "add", stdin=stdin))
+        self.assertIn("등록되지 않은 카테고리입니다: 'nope'", out)
+        self.assertIn("0보다 큰 양수여야 합니다: 0", out)
+        self.assertIn("일자는 1~31 사이여야 합니다: 32", out)
+        self.assertIn("[저장 완료] id=RC-0002", out)
+
+        out = self.assert_ok(self.run_cli("recurring", "list"))
+        self.assertIn("RC-0001 | 25일", out)
+        self.assertIn("RC-0002 | 15일", out)
+
+    def test_apply_creates_once_and_clamps_to_month_end(self):
+        self.add_rule("income", "salary", 3000000, 25, "월급")
+        self.add_rule("expense", "housing", 500000, 31, "월세")
+
+        out = self.assert_ok(self.run_cli("recurring", "apply", "--month", "2024-02"))
+        self.assertIn("created=2, already=0, skipped=0", out)
+        rows = {r["memo"]: r for r in self.read_rows("transactions.csv")}
+        self.assertEqual(rows["월세"]["date"], "2024-02-29")      # 31일 → 윤년 2월 말일
+        self.assertEqual(rows["월급"]["date"], "2024-02-25")
+
+        out = self.assert_ok(self.run_cli("recurring", "apply", "--month", "2024-02"))
+        self.assertIn("created=0, already=2, skipped=0", out)
+        self.assertEqual(len(self.read_rows("transactions.csv")), 2)  # 중복 생성 없음
+
+        self.assert_ok(self.run_cli("recurring", "apply", "--month", "2023-04"))
+        self.assertIn("2023-04-30", [r["date"] for r in self.read_rows("transactions.csv")])
+
+    def test_apply_skips_rule_with_invalid_category(self):
+        self.add_rule("expense", "food", 1000, 1)
+        # 파일을 직접 고쳐 카테고리가 사라진 상황을 재현
+        rules = self.data_dir / "recurring.csv"
+        rules.write_text(rules.read_text(encoding="utf-8").replace(",food,", ",ghost,"), encoding="utf-8")
+        out = self.assert_ok(self.run_cli("recurring", "apply", "--month", "2024-01"))
+        self.assertIn("RC-0001: 등록되지 않은 카테고리입니다: 'ghost'", out)
+        self.assertIn("created=0, already=0, skipped=1", out)
+
+    def test_remove_rule_keeps_created_transactions_and_id_not_reused(self):
+        self.add_rule("expense", "food", 1000, 1)
+        self.assert_ok(self.run_cli("recurring", "apply", "--month", "2024-01"))
+        self.assert_ok(self.run_cli("recurring", "remove", "--id", "RC-0001"))
+        self.assertEqual(len(self.read_rows("transactions.csv")), 1)
+        self.assertIn("존재하지 않는 반복 내역 id", self.assert_error(self.run_cli("recurring", "remove", "--id", "RC-0001")))
+        self.assertEqual(self.add_rule("expense", "food", 1000, 1), "RC-0002")
+
+    def test_category_removal_considers_rules(self):
+        self.add_rule("expense", "housing", 500000, 1)
+        err = self.assert_error(self.run_cli("category", "remove", "--name", "housing"))
+        self.assertIn("반복 내역이 1건", err)
+        out = self.assert_ok(self.run_cli("category", "remove", "--name", "housing", "--replace-with", "etc"))
+        self.assertIn("1건의 반복 내역을 'etc'(으)로 옮겼습니다", out)
+        self.assertIn("| etc", self.assert_ok(self.run_cli("recurring", "list")))
 
 
 class DataSafetyTest(CliTestCase):

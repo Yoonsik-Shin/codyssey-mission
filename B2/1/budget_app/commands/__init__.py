@@ -7,11 +7,13 @@ from .delete import DeleteCommand
 from .export_csv import ExportCommand
 from .import_csv import ImportCommand
 from .list import ListCommand
+from .recurring import RecurringCommand
 from .search import SearchCommand
 from .summary import SummaryCommand
 from .update import UpdateCommand
 
 __all__ = [
+    "RecurringCommand",
     "AddCommand", "BaseCommand", "BudgetCommand", "CategoryCommand", "DeleteCommand",
     "ExportCommand", "ImportCommand", "ListCommand", "SearchCommand", "SummaryCommand", "UpdateCommand",
 ]

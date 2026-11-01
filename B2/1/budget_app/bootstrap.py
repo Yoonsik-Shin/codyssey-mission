@@ -26,6 +26,11 @@ def build_commands(data_dir: str = DEFAULT_DATA_DIR) -> list[commands.BaseComman
     budget_repo = repositories.StoreBudgetRepository(
         stores.CsvStore(path("budgets.csv"), repositories.BUDGET_FIELDS),
     )
+    rule_repo = repositories.StoreRecurringRuleRepository(
+        stores.CsvStore(path("recurring.csv"), repositories.RECURRING_FIELDS),
+        stores.CsvStore(path("recurring_log.csv"), repositories.RECURRING_LOG_FIELDS),
+        stores.SequenceFile(path("recurring.seq")),
+    )
     csv_file = repositories.TransactionCsvFile()
 
     # 여러 Command가 함께 쓰는 UseCase
@@ -41,10 +46,17 @@ def build_commands(data_dir: str = DEFAULT_DATA_DIR) -> list[commands.BaseComman
         commands.CategoryCommand(
             usecases.AddCategoryUseCase(category_repo),
             list_categories,
-            usecases.RemoveCategoryUseCase(category_repo, tx_repo),
+            usecases.RemoveCategoryUseCase(category_repo, tx_repo, rule_repo),
         ),
         commands.UpdateCommand(usecases.UpdateTransactionUseCase(tx_repo, category_repo)),
         commands.DeleteCommand(usecases.DeleteTransactionUseCase(tx_repo)),
         commands.ImportCommand(usecases.ImportTransactionsUseCase(tx_repo, category_repo, csv_file)),
         commands.ExportCommand(usecases.ExportTransactionsUseCase(tx_repo, csv_file)),
+        commands.RecurringCommand(
+            usecases.AddRecurringRuleUseCase(rule_repo, category_repo),
+            usecases.ListRecurringRulesUseCase(rule_repo),
+            usecases.RemoveRecurringRuleUseCase(rule_repo),
+            usecases.ApplyRecurringRulesUseCase(rule_repo, tx_repo, category_repo),
+            list_categories,
+        ),
     ]

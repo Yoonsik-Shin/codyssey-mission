@@ -66,4 +66,6 @@ class CategoryCommand(BaseCommand):
         result = self._remove_category.execute(args.name, replace_with=args.replace_with)
         if result.moved:
             print(f"[이동 완료] {result.moved}건의 거래를 '{result.replacement}'(으)로 옮겼습니다.")
+        if result.moved_rules:
+            print(f"[이동 완료] {result.moved_rules}건의 반복 내역을 '{result.replacement}'(으)로 옮겼습니다.")
         print(f"[삭제 완료] category={result.removed}")

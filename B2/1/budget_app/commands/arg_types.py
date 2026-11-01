@@ -41,6 +41,17 @@ def parse_positive_int(value: str) -> int:
     return val
 
 
+def parse_day(value: str) -> int:
+    """반복 일자 (1~31)"""
+    try:
+        val = int(value.strip())
+    except ValueError:
+        raise ArgumentTypeError(f"숫자만 입력 가능합니다: '{value}'")
+    if not 1 <= val <= 31:
+        raise ArgumentTypeError(f"일자는 1~31 사이여야 합니다: {val} (그 달에 없는 날은 말일로 보정)")
+    return val
+
+
 def ask(label: str, parse: Callable[[str], T]) -> T:
     """올바른 값이 들어올 때까지 대화형으로 재입력을 요구"""
     while True:

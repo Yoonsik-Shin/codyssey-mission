@@ -1,6 +1,7 @@
 import unicodedata
 from collections.abc import Iterable
 from ..models.budget import BudgetStatus
+from ..models.recurring import RecurringRule
 from ..models.transaction import Transaction
 
 
@@ -51,6 +52,23 @@ def format_transactions(transactions: Iterable[Transaction]) -> list[str]:
         for tx in transactions
     ]
     return format_table(header, rows, right_align={4})
+
+
+def format_recurring_rules(rules: Iterable[RecurringRule]) -> list[str]:
+    header = ["id", "매월", "타입", "카테고리", "금액", "메모", "태그"]
+    rows = [
+        [
+            rule.id,
+            f"{rule.day}일",
+            rule.type.value,
+            rule.category,
+            f"{rule.amount:,}",
+            rule.memo,
+            ",".join(f"#{tag}" for tag in rule.tags),
+        ]
+        for rule in rules
+    ]
+    return format_table(header, rows, right_align={1, 4})
 
 
 def format_won(amount: int) -> str:

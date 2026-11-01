@@ -9,6 +9,7 @@ from ..errors import (
     CategoryNotFoundError,
     DuplicateCategoryError,
     InvalidCsvHeaderError,
+    RecurringRuleNotFoundError,
     NothingToUpdateError,
     SameReplacementCategoryError,
     SourceFileNotFoundError,
@@ -47,11 +48,13 @@ def hint_for(error: BudgetAppError) -> str:
         case DuplicateCategoryError():
             return "'python -m budget_app category list'로 등록된 카테고리를 확인하세요."
         case CategoryInUseError():
-            return "'--replace-with <카테고리>'로 대체 카테고리를 지정하면 거래를 옮긴 뒤 삭제합니다."
+            return "'--replace-with <카테고리>'로 대체 카테고리를 지정하면 거래·반복 내역을 옮긴 뒤 삭제합니다."
         case SameReplacementCategoryError():
             return "다른 카테고리를 --replace-with로 지정하세요."
         case NothingToUpdateError():
             return "--date, --type, --category, --amount, --memo, --tags 중 하나 이상을 지정하세요."
+        case RecurringRuleNotFoundError():
+            return "'python -m budget_app recurring list'로 id를 확인하세요."
         case SourceFileNotFoundError():
             return "파일 경로를 확인하세요."
         case InvalidCsvHeaderError():

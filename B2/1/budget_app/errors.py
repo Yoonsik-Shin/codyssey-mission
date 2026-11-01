@@ -22,6 +22,12 @@ class CategoryNotFoundError(NotFoundError):
         self.available = available
 
 
+class RecurringRuleNotFoundError(NotFoundError):
+    def __init__(self, rule_id: str):
+        super().__init__(f"존재하지 않는 반복 내역 id입니다: '{rule_id}'")
+        self.rule_id = rule_id
+
+
 class SourceFileNotFoundError(NotFoundError):
     def __init__(self, path: str):
         super().__init__(f"가져올 파일이 없습니다: {path}")
@@ -35,10 +41,12 @@ class DuplicateCategoryError(BudgetAppError):
 
 
 class CategoryInUseError(BudgetAppError):
-    def __init__(self, name: str, count: int):
-        super().__init__(f"'{name}' 카테고리를 사용하는 거래가 {count}건 있어 삭제할 수 없습니다.")
+    def __init__(self, name: str, count: int, rule_count: int = 0):
+        usage = f"거래가 {count}건" + (f", 반복 내역이 {rule_count}건" if rule_count else "")
+        super().__init__(f"'{name}' 카테고리를 사용하는 {usage} 있어 삭제할 수 없습니다.")
         self.name = name
         self.count = count
+        self.rule_count = rule_count
 
 
 class SameReplacementCategoryError(BudgetAppError):
